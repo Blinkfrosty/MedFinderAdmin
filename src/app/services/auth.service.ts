@@ -1,9 +1,9 @@
 import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Auth, signInWithEmailAndPassword, UserCredential } from '@angular/fire/auth';
-import { Database, ref, get } from '@angular/fire/database';
-import { User } from '../models/user.model';
 import { Router } from '@angular/router';
+import { User } from '../models/user.model';
+import { UserDataAccessService } from './user-data-access.service';
 
 @Injectable({
     providedIn: 'root'
@@ -11,7 +11,7 @@ import { Router } from '@angular/router';
 export class AuthService {
     constructor(
         private auth: Auth,
-        private db: Database,
+        private userDataAccessService: UserDataAccessService,
         private router: Router,
         @Inject(PLATFORM_ID) private platformId: Object
     ) { }
@@ -20,9 +20,7 @@ export class AuthService {
         try {
             const userCredential: UserCredential = await signInWithEmailAndPassword(this.auth, email, password);
             const userId = userCredential.user.uid;
-            const userRef = ref(this.db, `users/${userId}`);
-            const userSnapshot = await get(userRef);
-            const user: User = userSnapshot.val();
+            const user: User = await this.userDataAccessService.getUserByUid(userId);
 
             if (user.isSystemAdmin && !user.isHospitalAdmin && !user.isPatient) {
                 // Store user data in local storage or a service

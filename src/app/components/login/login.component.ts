@@ -33,7 +33,12 @@ export class LoginComponent {
         this.loginError = null; // Clear any previous error message on successful login
       } catch (error) {
         console.error('Login failed', error);
-        this.loginError = 'Login failed. Please check your email and password and try again.'; // Set error message
+        
+        if ((error as Error).message === 'User is not an admin') {
+          this.loginError = 'Login failed. Please log in with an admin account.';
+        } else {
+          this.loginError = 'Login failed. Please check your email and password and try again.';
+        }
       }
     }
   }

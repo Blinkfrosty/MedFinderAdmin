@@ -11,7 +11,7 @@ import { AuthService } from '../../services/auth.service';
   styleUrls: ['./system-admin-dashboard.component.css']
 })
 export class SystemAdminDashboardComponent {
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService) { }
 
   logout(): void {
     this.authService.logout();

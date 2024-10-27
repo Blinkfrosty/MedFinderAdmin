@@ -1,0 +1,39 @@
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+mat-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 4rem;
+    width: 400px;
+}
+
+mat-card-title {
+    margin-bottom: 1rem;
+}
+
+.form-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+}
+
+mat-form-field {
+    width: 130%;
+}
+
+button {
+    width: 90%;
+}
+
+mat-error {
+    width: 130%;
+    text-align: center;
+}

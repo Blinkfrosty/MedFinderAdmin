@@ -1,6 +1,7 @@
 import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { Auth, signInWithEmailAndPassword, UserCredential } from '@angular/fire/auth';
+import { Auth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
+    updateEmail, updatePassword, UserCredential } from '@angular/fire/auth';
 import { Router } from '@angular/router';
 import { User } from '../models/user.model';
 import { UserDataAccessService } from './user-data-access.service';
@@ -58,5 +59,81 @@ export class AuthService {
 
     isAuthenticated(): boolean {
         return !!this.getUser();
+    }
+
+    async createUser(
+        email: string,
+        password: string,
+        firstName: string,
+        lastName: string,
+        phoneNumber: string,
+        genderCode: string,
+        profilePictureUri: string,
+        isPatient: boolean,
+        isHospitalAdmin: boolean,
+        isSystemAdmin: boolean
+    ): Promise<void> {
+        try {
+            const userCredential: UserCredential = await createUserWithEmailAndPassword(this.auth, email, password);
+            const uid = userCredential.user.uid;
+            await this.userDataAccessService.setUserByUid(
+                uid,
+                firstName,
+                lastName,
+                email,
+                phoneNumber,
+                genderCode,
+                profilePictureUri,
+                isPatient,
+                isHospitalAdmin,
+                isSystemAdmin
+            );
+        } catch (error) {
+            console.error('Error creating user', error);
+            throw error;
+        }
+    }
+
+    async updateUser(
+        uid: string,
+        email: string,
+        password: string,
+        firstName: string,
+        lastName: string,
+        phoneNumber: string,
+        genderCode: string,
+        profilePictureUri: string,
+        isPatient: boolean,
+        isHospitalAdmin: boolean,
+        isSystemAdmin: boolean
+    ): Promise<void> {
+        try {
+            const user = this.auth.currentUser;
+            if (user) {
+                if (user.email !== email) {
+                    await updateEmail(user, email);
+                }
+                if (password) {
+                    await updatePassword(user, password);
+                }
+                await this.userDataAccessService.setUserByUid(
+                    uid,
+                    firstName,
+                    lastName,
+                    email,
+                    phoneNumber,
+                    genderCode,
+                    profilePictureUri,
+                    isPatient,
+                    isHospitalAdmin,
+                    isSystemAdmin
+                );
+            } else {
+                throw new Error('No authenticated user found');
+            }
+        } catch (error) {
+            console.error('Error updating user', error);
+            throw error;
+        }
     }
 }

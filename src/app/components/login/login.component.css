@@ -38,3 +38,13 @@ mat-error {
     width: 130%;
     text-align: center;
 }
+
+.material-symbols-outlined {
+    font-size: 64px;
+    margin-bottom: 16px;
+    font-variation-settings:
+        'FILL' 0,
+        'wght' 400,
+        'GRAD' 0,
+        'opsz' 64
+}

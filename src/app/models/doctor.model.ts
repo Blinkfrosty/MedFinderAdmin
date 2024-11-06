@@ -1,3 +1,6 @@
+/**
+ * Doctor data model
+ */
 export interface Doctor {
     id: string;
     name: string;

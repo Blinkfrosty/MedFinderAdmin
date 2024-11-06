@@ -1,0 +1,8 @@
+<div *ngIf="isLoading$ | async" class="global-loading">
+    <div class="progress-bar">
+        Signing In...
+        <div class="loading"></div>
+    </div>
+</div>
+<app-loading-spinner></app-loading-spinner>
+<router-outlet></router-outlet>

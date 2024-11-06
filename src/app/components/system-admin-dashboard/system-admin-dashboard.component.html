@@ -1,5 +1,15 @@
-<div class="dashboard-container">
-    <h1>System Admin Dashboard</h1>
-    <button mat-raised-button color="warn" (click)="logout()">Logout</button>
-    <!-- TODO: Add dashboard content here -->
-</div>
+<mat-sidenav-container class="sidenav-container">
+    <mat-sidenav mode="side" opened>
+        <mat-nav-list>
+            <a mat-list-item routerLink="manage-users" class="nav-item">Manage Users</a>
+            <a mat-list-item routerLink="manage-departments" class="nav-item">Manage Departments</a>
+            <a mat-list-item routerLink="manage-doctors" class="nav-item">Manage Doctors</a>
+            <a mat-list-item routerLink="manage-hospitals" class="nav-item">Manage Hospitals</a>
+            <a mat-list-item routerLink="update-admin-account" class="nav-item">Update Admin Account</a>
+            <a mat-list-item (click)="confirmLogout()" class="nav-item">Logout</a>
+        </mat-nav-list>
+    </mat-sidenav>
+    <mat-sidenav-content>
+        <router-outlet></router-outlet>
+    </mat-sidenav-content>
+</mat-sidenav-container>

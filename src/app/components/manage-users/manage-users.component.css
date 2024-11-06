@@ -1,0 +1,57 @@
+.user-list {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+mat-list {
+    flex: 1;
+    overflow: auto;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+}
+
+mat-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #eee;
+    padding: 28px 20px;
+}
+
+mat-list-item:last-child {
+    border-bottom: none;
+}
+
+.list-item-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-name {
+    font-weight: bold;
+}
+
+.button-group {
+    display: flex;
+    gap: 8px;
+}
+
+button {
+    height: 36px;
+}

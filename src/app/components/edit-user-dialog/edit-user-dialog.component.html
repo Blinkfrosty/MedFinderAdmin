@@ -1,0 +1,85 @@
+<div class="dialog-container">
+    <h1 mat-dialog-title>{{ isNew ? 'Add User' : 'Edit User' }}</h1>
+    <div mat-dialog-content>
+        <form [formGroup]="editUserForm" (ngSubmit)="onSubmit()">
+
+            <mat-form-field *ngIf="!isNew">
+                <mat-label>User ID</mat-label>
+                <input matInput formControlName="id" />
+            </mat-form-field>
+
+            <mat-form-field>
+                <mat-label>Email</mat-label>
+                <input matInput formControlName="email" type="email" required />
+                <mat-error *ngIf="editUserForm.get('email')?.hasError('required')">
+                    Email is required
+                </mat-error>
+                <mat-error *ngIf="editUserForm.get('email')?.hasError('email')">
+                    Please enter a valid email
+                </mat-error>
+            </mat-form-field>
+
+            <mat-form-field>
+                <mat-label>First Name</mat-label>
+                <input matInput formControlName="firstName" required />
+                <mat-error *ngIf="editUserForm.get('firstName')?.hasError('required')">
+                    First Name is required
+                </mat-error>
+            </mat-form-field>
+
+            <mat-form-field>
+                <mat-label>Last Name</mat-label>
+                <input matInput formControlName="lastName" required />
+                <mat-error *ngIf="editUserForm.get('lastName')?.hasError('required')">
+                    Last Name is required
+                </mat-error>
+            </mat-form-field>
+
+            <mat-form-field>
+                <mat-label>Phone Number</mat-label>
+                <input matInput formControlName="phoneNumber" />
+                <mat-error *ngIf="editUserForm.get('phoneNumber')?.hasError('pattern')">
+                    Phone number format is invalid
+                </mat-error>
+            </mat-form-field>
+
+            <mat-form-field>
+                <mat-label>Profile Picture URI</mat-label>
+                <input matInput formControlName="profilePictureUri" />
+            </mat-form-field>
+
+            <label>Gender</label>
+            <mat-radio-group formControlName="gender">
+                <mat-radio-button color="primary" value="m">Male</mat-radio-button>
+                <mat-radio-button color="primary" value="f">Female</mat-radio-button>
+                <mat-radio-button color="primary" value="o">Other</mat-radio-button>
+            </mat-radio-group>
+            <mat-error *ngIf="editUserForm.get('gender')?.hasError('required')">
+                Gender is required
+            </mat-error>
+
+            <label>Role</label>
+            <mat-radio-group formControlName="role">
+                <mat-radio-button color="primary" value="patient">Patient</mat-radio-button>
+                <mat-radio-button color="primary" value="hospitalAdmin">Hospital Admin</mat-radio-button>
+                <mat-radio-button color="primary" value="systemAdmin">System Admin</mat-radio-button>
+            </mat-radio-group>
+            <mat-error *ngIf="editUserForm.get('role')?.hasError('required')">
+                Role is required
+            </mat-error>
+
+            <mat-form-field>
+                <mat-label>Password</mat-label>
+                <input matInput formControlName="password" type="password" [required]="isNew" />
+                <mat-error *ngIf="editUserForm.get('password')?.hasError('required')">
+                    Password is required
+                </mat-error>
+            </mat-form-field>
+
+            <div class="button-group">
+                <button mat-raised-button color="primary" type="submit">{{ isNew ? 'Add' : 'Save' }}</button>
+                <button mat-raised-button type="button" (click)="onCancel()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,20 @@
+<div class="user-list">
+    <div class="header">
+        <h2>Manage Users</h2>
+        <button mat-raised-button color="primary" (click)="addUser()">Add User</button>
+    </div>
+    <mat-list>
+        <mat-list-item *ngFor="let user of users">
+            <div class="list-item-content">
+                <div class="user-info">
+                    <div class="user-name">{{ user.firstName }} {{ user.lastName }}</div>
+                    <div>{{ user.email }}</div>
+                </div>
+                <div class="button-group">
+                    <button mat-raised-button color="primary" (click)="editUser(user)">Edit</button>
+                    <button mat-raised-button color="warn" (click)="deleteUser(user)">Delete</button>
+                </div>
+            </div>
+        </mat-list-item>
+    </mat-list>
+</div>

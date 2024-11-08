@@ -3,6 +3,23 @@
     <div mat-dialog-content>
         <form [formGroup]="editUserForm" (ngSubmit)="onSubmit()">
 
+            <!-- Profile Photo Section (Only for existing users) -->
+            <div class="profile-photo-section" *ngIf="!isNew">
+                <ng-container *ngIf="previewUrl; else placeholder">
+                    <img [src]="previewUrl" alt="Profile Photo" class="profile-photo" />
+                </ng-container>
+                <ng-template #placeholder>
+                    <mat-icon class="profile-placeholder">account_circle</mat-icon>
+                </ng-template>
+                <div class="photo-buttons">
+                    <button mat-raised-button color="primary" type="button" (click)="uploadPhoto()">Upload</button>
+                    <button mat-raised-button type="button" (click)="clearPhoto()" [disabled]="!previewUrl">Clear
+                        Photo</button>
+                    <input type="file" accept="image/*" #fileInput style="display: none;"
+                        (change)="onFileSelected($event)" />
+                </div>
+            </div>
+
             <mat-form-field *ngIf="!isNew">
                 <mat-label>User ID</mat-label>
                 <input matInput formControlName="id" />
@@ -43,11 +60,6 @@
                 </mat-error>
             </mat-form-field>
 
-            <mat-form-field>
-                <mat-label>Profile Picture URI</mat-label>
-                <input matInput formControlName="profilePictureUri" />
-            </mat-form-field>
-
             <label>Gender</label>
             <mat-radio-group formControlName="gender">
                 <mat-radio-button color="primary" value="m">Male</mat-radio-button>
@@ -70,7 +82,11 @@
 
             <mat-form-field>
                 <mat-label>Password</mat-label>
-                <input matInput formControlName="password" type="password" [required]="isNew" />
+                <input matInput formControlName="password" [type]="isPasswordVisible ? 'text' : 'password'"
+                    [required]="isNew" />
+                <mat-icon matSuffix (click)="isPasswordVisible = !isPasswordVisible">
+                    {{isPasswordVisible ? 'visibility' : 'visibility_off'}}
+                </mat-icon>
                 <mat-error *ngIf="editUserForm.get('password')?.hasError('required')">
                     Password is required
                 </mat-error>

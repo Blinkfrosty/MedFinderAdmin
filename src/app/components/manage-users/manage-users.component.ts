@@ -10,6 +10,8 @@ import { UserDataAccessService } from '../../services/user-data-access.service';
 import { AuthService } from '../../services/auth.service';
 import { LoadingService } from '../../services/loading.service';
 import { Subscription } from 'rxjs';
+import { PhotoStorageService } from '../../services/photo-storage.service';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 /**
  * Component responsible for managing users, including displaying the user list,
@@ -18,7 +20,7 @@ import { Subscription } from 'rxjs';
 @Component({
   selector: 'app-manage-users',
   standalone: true,
-  imports: [CommonModule, MatListModule, MatButtonModule],
+  imports: [CommonModule, MatListModule, MatButtonModule, MatSnackBarModule],
   templateUrl: './manage-users.component.html',
   styleUrls: ['./manage-users.component.css']
 })
@@ -35,7 +37,9 @@ export class ManageUsersComponent implements OnInit {
     private dialog: MatDialog,
     private userDataAccessService: UserDataAccessService,
     private authService: AuthService,
-    private loadingService: LoadingService
+    private loadingService: LoadingService,
+    private photoStorageService: PhotoStorageService,
+    private snackBar: MatSnackBar
   ) { }
 
   ngOnInit(): void {
@@ -67,15 +71,19 @@ export class ManageUsersComponent implements OnInit {
             error: (error: any) => {
               console.error('Error loading users', error);
               this.loadingService.hide();
+              this.snackBar.open('Failed to load users', 'Dismiss', 
+                { duration: 5000 });
             }
           });
       } else {
         console.warn('No authenticated user found.');
         this.loadingService.hide();
+        this.snackBar.open('Failed to load users', 'Dismiss', { duration: 5000 });
       }
     } catch (error) {
       console.error('Error initializing user subscription', error);
       this.loadingService.hide();
+      this.snackBar.open('Failed to load users', 'Dismiss', { duration: 5000 });
     }
   }
 
@@ -105,8 +113,10 @@ export class ManageUsersComponent implements OnInit {
             result.isHospitalAdmin,
             result.isSystemAdmin
           );
+          this.snackBar.open('User added successfully', 'Dismiss', { duration: 5000 });
         } catch (error) {
           console.error('Error creating user', error);
+          this.snackBar.open('Failed to add user', 'Dismiss', { duration: 5000 });
         } finally {
           this.loadingService.hide();
         }
@@ -143,8 +153,10 @@ export class ManageUsersComponent implements OnInit {
             result.isHospitalAdmin,
             result.isSystemAdmin
           );
+          this.snackBar.open('User updated successfully', 'Dismiss', { duration: 5000 });
         } catch (error) {
           console.error('Error updating user', error);
+          this.snackBar.open('Failed to update user', 'Dismiss', { duration: 5000 });
         } finally {
           this.loadingService.hide();
         }
@@ -174,9 +186,14 @@ export class ManageUsersComponent implements OnInit {
       if (confirmed) {
         this.loadingService.show();
         try {
+          if (user.profilePictureUri) {
+            await this.photoStorageService.deleteUserPhoto(user.id);
+          }
           await this.authService.deleteUser(user.id);
+          this.snackBar.open('User deleted successfully', 'Dismiss', { duration: 5000 });
         } catch (error) {
           console.error('Error deleting user', error);
+          this.snackBar.open('Failed to delete user', 'Dismiss', { duration: 5000 });
         } finally {
           this.loadingService.hide();
         }

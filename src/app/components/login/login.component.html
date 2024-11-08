@@ -22,13 +22,15 @@
           </mat-form-field>
           <mat-form-field>
             <mat-label>Password</mat-label>
-            <input matInput formControlName="password" type="password" required>
+            <input matInput formControlName="password" [type]="isPasswordVisible ? 'text' : 'password'" required>
+            <mat-icon matSuffix (click)="isPasswordVisible = !isPasswordVisible">
+              {{isPasswordVisible ? 'visibility' : 'visibility_off'}}
+            </mat-icon>
             <mat-error *ngIf="loginForm.get('password')?.hasError('required')">
               Password is required
             </mat-error>
           </mat-form-field>
           <button mat-raised-button color="primary" type="submit" [disabled]="isLoading">Login</button>
-          <mat-error *ngIf="loginError">{{ loginError }}</mat-error>
         </div>
       </form>
     </mat-card-content>

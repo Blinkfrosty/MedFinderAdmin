@@ -1,12 +1,15 @@
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, ViewChild, ElementRef } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { User } from '../../models/user.model';
-import { AuthService } from '../../services/auth.service';
+import { PhotoStorageService } from '../../services/photo-storage.service';
 import { CommonModule } from '@angular/common';
 import { MatInputModule } from '@angular/material/input';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { LoadingService } from '../../services/loading.service';
 
 /**
  * Component representing the dialog for adding or editing a user.
@@ -19,7 +22,9 @@ import { MatButtonModule } from '@angular/material/button';
     ReactiveFormsModule,
     MatInputModule,
     MatRadioModule,
-    MatButtonModule
+    MatButtonModule,
+    MatIconModule,
+    MatSnackBarModule
   ],
   templateUrl: './edit-user-dialog.component.html',
   styleUrls: ['./edit-user-dialog.component.css']
@@ -27,12 +32,19 @@ import { MatButtonModule } from '@angular/material/button';
 export class EditUserDialogComponent {
   editUserForm: FormGroup;
   isNew: boolean = false;
+  isPasswordVisible: boolean = false;
+  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
+  selectedFile: File | null = null;
+  previewUrl: string | null = null;
+  wasPhotoCleared: boolean = false;
 
   constructor(
     private fb: FormBuilder,
     private dialogRef: MatDialogRef<EditUserDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: { user: User | null },
-    private authService: AuthService
+    private photoStorageService: PhotoStorageService,
+    private snackBar: MatSnackBar,
+    private loadingService: LoadingService
   ) {
     this.isNew = !data.user;
     this.editUserForm = this.fb.group({
@@ -42,13 +54,16 @@ export class EditUserDialogComponent {
       lastName: [data.user ? data.user.lastName : '', Validators.required],
       phoneNumber: [data.user ? data.user.phoneNumber : '', [Validators.pattern(/^[+\d\-()\s]+$/)]],
       gender: [data.user ? data.user.genderCode : '', Validators.required],
-      profilePictureUri: [data.user ? data.user.profilePictureUri : ''],
       role: [data.user ? this.getUserRole(data.user) : '', Validators.required],
       password: [
         '',
         this.isNew ? [Validators.required] : []
       ]
     });
+
+    if (!this.isNew && data.user?.profilePictureUri) {
+      this.previewUrl = data.user.profilePictureUri;
+    }
   }
 
   /**
@@ -65,6 +80,50 @@ export class EditUserDialogComponent {
   }
 
   /**
+   * Opens the file input dialog to upload a photo.
+   */
+  uploadPhoto(): void {
+    this.fileInput.nativeElement.click();
+  }
+
+  /**
+   * Handles the file selection event.
+   * @param event The file input change event.
+   */
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      if (['image/jpeg', 'image/png', 'image/gif'].includes(file.type)) {
+        this.loadingService.show();
+
+        this.selectedFile = file;
+        const reader = new FileReader();
+        reader.onload = (e: any) => {
+          this.previewUrl = e.target.result;
+        };
+        reader.readAsDataURL(file);
+        this.wasPhotoCleared = false;
+
+        this.loadingService.hide();
+      } else {
+        this.snackBar.open('Invalid file type. Only JPEG, PNG, and GIF images are allowed.', 'Dismiss', {
+          duration: 5000,
+        });
+      }
+    }
+  }
+
+  /**
+   * Clears the selected photo.
+   */
+  clearPhoto(): void {
+    this.selectedFile = null;
+    this.previewUrl = null;
+    this.wasPhotoCleared = true;
+  }
+
+  /**
    * Handles the form submission for adding or editing a user.
    * If adding a new user, closes the dialog with the new user data.
    * If editing an existing user, closes the dialog with the updated user data.
@@ -73,31 +132,71 @@ export class EditUserDialogComponent {
     if (this.editUserForm.valid) {
       const formValue = this.editUserForm.value;
 
-      const userData = {
-        email: formValue.email,
-        firstName: formValue.firstName,
-        lastName: formValue.lastName,
-        phoneNumber: formValue.phoneNumber,
-        genderCode: formValue.gender,
-        profilePictureUri: formValue.profilePictureUri,
-        isPatient: formValue.role === 'patient',
-        isHospitalAdmin: formValue.role === 'hospitalAdmin',
-        isSystemAdmin: formValue.role === 'systemAdmin',
-        password: formValue.password,
-        isNew: this.isNew
-      };
+      let profilePictureUri = this.data.user ? this.data.user.profilePictureUri : '';
 
-      if (this.isNew) {
-        this.dialogRef.close(userData);
-      } else {
-        const updatedUser = {
-          ...userData,
-          id: this.data.user?.id || ''
+      if (!this.isNew) { // Only handle photo for existing users
+        if (this.selectedFile) {
+          try {
+            this.loadingService.show();
+            profilePictureUri = await this.photoStorageService.setUserPhoto(
+              this.data.user!.id,
+              this.selectedFile
+            );
+          } catch (error) {
+            console.error('Error uploading photo', error);
+            this.snackBar.open('Failed to upload photo', 'Dismiss', {
+              duration: 5000,
+            });
+            return;
+          }
+          finally {
+            this.loadingService.hide();
+          }
+        }
+
+        if (this.wasPhotoCleared) {
+          try {
+            this.loadingService.show();
+            await this.photoStorageService.deleteUserPhoto(this.data.user!.id);
+            profilePictureUri = '';
+          } catch (error) {
+            console.error('Error deleting photo', error);
+            this.snackBar.open('Failed to delete photo', 'Dismiss', {
+              duration: 5000,
+            });
+            return;
+          }
+          finally {
+            this.loadingService.hide();
+          }
+        }
+      }
+
+        const userData = {
+          email: formValue.email,
+          firstName: formValue.firstName,
+          lastName: formValue.lastName,
+          phoneNumber: formValue.phoneNumber,
+          genderCode: formValue.gender,
+          profilePictureUri: profilePictureUri,
+          isPatient: formValue.role === 'patient',
+          isHospitalAdmin: formValue.role === 'hospitalAdmin',
+          isSystemAdmin: formValue.role === 'systemAdmin',
+          password: formValue.password,
+          isNew: this.isNew
         };
-        this.dialogRef.close(updatedUser);
+
+        if (this.isNew) {
+          this.dialogRef.close(userData);
+        } else {
+          const updatedUser = {
+            ...userData,
+            id: this.data.user?.id || ''
+          };
+          this.dialogRef.close(updatedUser);
+        }
       }
     }
-  }
 
   /**
    * Closes the dialog without saving any changes.

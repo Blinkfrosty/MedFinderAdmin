@@ -34,11 +34,6 @@ button {
     width: 90%;
 }
 
-mat-error {
-    width: 130%;
-    text-align: center;
-}
-
 .material-symbols-outlined {
     font-size: 64px;
     margin-bottom: 16px;

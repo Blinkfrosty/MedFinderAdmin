@@ -5,6 +5,7 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 import { provideFirebaseApp, initializeApp } from '@angular/fire/app';
 import { provideAuth, getAuth } from '@angular/fire/auth';
 import { provideDatabase, getDatabase } from '@angular/fire/database';
+import { provideStorage, getStorage } from '@angular/fire/storage';
 import { provideFunctions, getFunctions } from '@angular/fire/functions';
 import { firebaseConfig } from '../environments/firebase-config';
 import { routes } from './app.routes';
@@ -23,6 +24,7 @@ export const appConfig: ApplicationConfig = {
     provideFirebaseApp(() => initializeApp(firebaseConfig)),
     provideAuth(() => getAuth()),
     provideDatabase(() => getDatabase()),
+    provideStorage(() => getStorage()),
     provideFunctions(() => getFunctions()),
     {
       provide: APP_INITIALIZER,

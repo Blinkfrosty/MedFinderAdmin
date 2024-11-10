@@ -15,19 +15,19 @@
                     <button mat-raised-button color="primary" type="button" (click)="uploadPhoto()">Upload</button>
                     <button mat-raised-button type="button" (click)="clearPhoto()" [disabled]="!previewUrl">Clear
                         Photo</button>
-                    <input type="file" accept="image/*" #fileInput style="display: none;"
-                        (change)="onFileSelected($event)" />
+                    <input type="file" accept="image/*" #fileInput class="hidden-file-input"
+                        title="Upload Profile Photo" (change)="onFileSelected($event)" />
                 </div>
             </div>
 
             <mat-form-field *ngIf="!isNew">
                 <mat-label>User ID</mat-label>
-                <input matInput formControlName="id" />
+                <input matInput formControlName="id" placeholder="User ID" />
             </mat-form-field>
 
             <mat-form-field>
                 <mat-label>Email</mat-label>
-                <input matInput formControlName="email" type="email" required />
+                <input matInput formControlName="email" type="email" placeholder="Email" required />
                 <mat-error *ngIf="editUserForm.get('email')?.hasError('required')">
                     Email is required
                 </mat-error>
@@ -38,7 +38,7 @@
 
             <mat-form-field>
                 <mat-label>First Name</mat-label>
-                <input matInput formControlName="firstName" required />
+                <input matInput formControlName="firstName" placeholder="First Name" required />
                 <mat-error *ngIf="editUserForm.get('firstName')?.hasError('required')">
                     First Name is required
                 </mat-error>
@@ -46,7 +46,7 @@
 
             <mat-form-field>
                 <mat-label>Last Name</mat-label>
-                <input matInput formControlName="lastName" required />
+                <input matInput formControlName="lastName" placeholder="Last Name" required />
                 <mat-error *ngIf="editUserForm.get('lastName')?.hasError('required')">
                     Last Name is required
                 </mat-error>
@@ -54,7 +54,7 @@
 
             <mat-form-field>
                 <mat-label>Phone Number</mat-label>
-                <input matInput formControlName="phoneNumber" />
+                <input matInput formControlName="phoneNumber" placeholder="Phone Number" />
                 <mat-error *ngIf="editUserForm.get('phoneNumber')?.hasError('pattern')">
                     Phone number format is invalid
                 </mat-error>
@@ -83,7 +83,7 @@
             <mat-form-field>
                 <mat-label>Password</mat-label>
                 <input matInput formControlName="password" [type]="isPasswordVisible ? 'text' : 'password'"
-                    [required]="isNew" />
+                    [required]="isNew" placeholder="Password" />
                 <mat-icon matSuffix (click)="isPasswordVisible = !isPasswordVisible">
                     {{isPasswordVisible ? 'visibility' : 'visibility_off'}}
                 </mat-icon>
@@ -93,7 +93,8 @@
             </mat-form-field>
 
             <div class="button-group">
-                <button mat-raised-button color="primary" type="submit">{{ isNew ? 'Add' : 'Save' }}</button>
+                <button mat-raised-button color="primary" type="submit" [disabled]="editUserForm.invalid">{{ isNew ?
+                    'Add' : 'Save' }}</button>
                 <button mat-raised-button type="button" (click)="onCancel()">Cancel</button>
             </div>
         </form>

@@ -1,0 +1,86 @@
+.dialog-container {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    max-height: 100vh;
+    overflow-y: auto;
+    flex: 1 1 auto;
+}
+
+.mat-dialog-content {
+    padding: 0;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+mat-form-field,
+mat-radio-group {
+    width: 100%;
+    max-width: 500px;
+    margin-bottom: 16px;
+}
+
+mat-radio-group {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+mat-radio-button {
+    margin: 0 12px;
+}
+
+.button-group {
+    display: flex;
+    gap: 24px;
+    margin-top: 24px;
+}
+
+.button-group button {
+    min-width: 100px;
+}
+
+.dialog-container label {
+    font-weight: bold;
+}
+
+/* Profile Photo Section */
+.profile-photo-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.profile-photo {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid rgba(0, 0, 0, 0.15);
+    margin-bottom: 16px;
+}
+
+.profile-placeholder {
+    width: 100px;
+    height: 100px;
+    font-size: 100px;
+    color: rgba(0, 0, 0, 0.3);
+    border-radius: 50%;
+    border: 2px solid rgba(0, 0, 0, 0.15);
+    margin-bottom: 16px;
+}
+
+.photo-buttons {
+    display: flex;
+    gap: 16px;
+}
+
+.hidden-file-input {
+    display: none;
+}

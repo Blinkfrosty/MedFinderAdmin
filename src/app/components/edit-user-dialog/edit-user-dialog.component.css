@@ -80,3 +80,7 @@ mat-radio-button {
     display: flex;
     gap: 16px;
 }
+
+.hidden-file-input {
+    display: none;
+}

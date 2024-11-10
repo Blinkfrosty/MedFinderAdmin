@@ -1,1 +1,99 @@
-<p>update-admin-account works!</p>
+<div class="dialog-container">
+    <h1 mat-dialog-title>Update Admin Account</h1>
+    <div mat-dialog-content>
+        <form [formGroup]="updateAdminForm" (ngSubmit)="onSubmit()">
+
+            <!-- Profile Photo Section -->
+            <div class="profile-photo-section">
+                <ng-container *ngIf="previewUrl; else placeholder">
+                    <img [src]="previewUrl" alt="Profile Photo" class="profile-photo" />
+                </ng-container>
+                <ng-template #placeholder>
+                    <mat-icon class="profile-placeholder">account_circle</mat-icon>
+                </ng-template>
+                <div class="photo-buttons">
+                    <button mat-raised-button color="primary" type="button" (click)="uploadPhoto()">Upload</button>
+                    <button mat-raised-button type="button" (click)="clearPhoto()" [disabled]="!previewUrl">Clear
+                        Photo</button>
+                    <input type="file" accept="image/*" #fileInput class="hidden-file-input"
+                        title="Upload Profile Photo" (change)="onFileSelected($event)" />
+                </div>
+            </div>
+
+            <mat-form-field>
+                <mat-label>User ID</mat-label>
+                <input matInput formControlName="id" placeholder="User ID" />
+            </mat-form-field>
+
+            <mat-form-field>
+                <mat-label>Email</mat-label>
+                <input matInput formControlName="email" type="email" placeholder="Email" required />
+                <mat-error *ngIf="updateAdminForm.get('email')?.hasError('required')">
+                    Email is required
+                </mat-error>
+                <mat-error *ngIf="updateAdminForm.get('email')?.hasError('email')">
+                    Please enter a valid email
+                </mat-error>
+            </mat-form-field>
+
+            <mat-form-field>
+                <mat-label>First Name</mat-label>
+                <input matInput formControlName="firstName" placeholder="First Name" required />
+                <mat-error *ngIf="updateAdminForm.get('firstName')?.hasError('required')">
+                    First Name is required
+                </mat-error>
+            </mat-form-field>
+
+            <mat-form-field>
+                <mat-label>Last Name</mat-label>
+                <input matInput formControlName="lastName" placeholder="Last Name" required />
+                <mat-error *ngIf="updateAdminForm.get('lastName')?.hasError('required')">
+                    Last Name is required
+                </mat-error>
+            </mat-form-field>
+
+            <mat-form-field>
+                <mat-label>Phone Number</mat-label>
+                <input matInput formControlName="phoneNumber" placeholder="Phone Number" />
+                <mat-error *ngIf="updateAdminForm.get('phoneNumber')?.hasError('pattern')">
+                    Phone number format is invalid
+                </mat-error>
+            </mat-form-field>
+
+            <label>Gender</label>
+            <mat-radio-group formControlName="gender">
+                <mat-radio-button color="primary" value="m">Male</mat-radio-button>
+                <mat-radio-button color="primary" value="f">Female</mat-radio-button>
+                <mat-radio-button color="primary" value="o">Other</mat-radio-button>
+            </mat-radio-group>
+            <mat-error *ngIf="updateAdminForm.get('gender')?.hasError('required')">
+                Gender is required
+            </mat-error>
+
+            <label>Role</label>
+            <mat-radio-group formControlName="role">
+                <mat-radio-button color="primary" value="patient" disabled="true">Patient</mat-radio-button>
+                <mat-radio-button color="primary" value="hospitalAdmin" disabled="true">Hospital
+                    Admin</mat-radio-button>
+                <mat-radio-button color="primary" value="systemAdmin" disabled="true">System Admin</mat-radio-button>
+            </mat-radio-group>
+            <mat-error *ngIf="updateAdminForm.get('role')?.hasError('required')">
+                Role is required
+            </mat-error>
+
+            <mat-form-field>
+                <mat-label>Password</mat-label>
+                <input matInput formControlName="password" [type]="isPasswordVisible ? 'text' : 'password'"
+                    placeholder="Password" />
+                <mat-icon matSuffix (click)="isPasswordVisible = !isPasswordVisible">
+                    {{isPasswordVisible ? 'visibility' : 'visibility_off'}}
+                </mat-icon>
+            </mat-form-field>
+
+            <div class="button-group">
+                <button mat-raised-button color="primary" type="submit"
+                    [disabled]="updateAdminForm.invalid">Update</button>
+            </div>
+        </form>
+    </div>
+</div>

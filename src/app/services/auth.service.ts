@@ -257,30 +257,31 @@ export class AuthService {
     ): Promise<void> {
         try {
             await this.verifyAdminPermissions();
+            let isUpdatingCurrentUser = this.currentUserSubject.value?.id === id;
 
-            // Fetch current user data
-            const currentUser = await this.userDataAccessService.getUserByUid(id);
-            if (!currentUser) {
+            // Fetch target user data
+            const targetUser = await this.userDataAccessService.getUserByUid(id);
+            if (!targetUser) {
                 throw new Error('User not found');
             }
 
             // Prepare update payload
             const updatePayload: { uid: string; email?: string; password?: string } = { uid: id };
-            let shouldUpdate = false;
+            let shouldUpdateAuth = false;
 
             // Check if email has changed
-            if (email !== currentUser.email) {
+            if (email !== targetUser.email) {
                 updatePayload.email = email;
-                shouldUpdate = true;
+                shouldUpdateAuth = true;
             }
 
             // Check if password is provided
             if (password && password.trim() !== '') {
                 updatePayload.password = password;
-                shouldUpdate = true;
+                shouldUpdateAuth = true;
             }
 
-            if (shouldUpdate) {
+            if (shouldUpdateAuth) {
                 // Update user via Firebase Cloud Function
                 const updateUserCallable = httpsCallable(this.functions, 'updateUser');
                 await updateUserCallable(updatePayload);
@@ -299,6 +300,18 @@ export class AuthService {
                 isHospitalAdmin,
                 isSystemAdmin
             );
+
+            if (isUpdatingCurrentUser) {
+                if (shouldUpdateAuth) {
+                    // Logout if email or password changed
+                    await this.logout();
+                }
+                else {
+                    // Update current user observable
+                    const updatedUser = await this.userDataAccessService.getUserByUid(id);
+                    this.currentUserSubject.next(updatedUser);
+                }
+            }
         } catch (error) {
             console.error('Error updating user', error);
             throw error;

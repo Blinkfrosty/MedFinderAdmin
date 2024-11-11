@@ -1,0 +1,35 @@
+<div class="dialog-container">
+    <h1 mat-dialog-title>{{ isNew ? 'Add Department' : 'Edit Department' }}</h1>
+    <div mat-dialog-content>
+        <form [formGroup]="editDepartmentForm" (ngSubmit)="onSubmit()">
+
+            <mat-form-field *ngIf="isSystemAdmin && !isNew">
+                <mat-label>Department ID</mat-label>
+                <input matInput formControlName="id" placeholder="Department ID" />
+            </mat-form-field>
+
+            <mat-form-field>
+                <mat-label>Name</mat-label>
+                <input matInput formControlName="name" placeholder="Name" required />
+                <mat-error *ngIf="editDepartmentForm.get('name')?.hasError('required')">
+                    Name is required
+                </mat-error>
+            </mat-form-field>
+
+            <mat-form-field>
+                <mat-label>Description</mat-label>
+                <textarea matInput formControlName="description" placeholder="Description" required></textarea>
+                <mat-error *ngIf="editDepartmentForm.get('description')?.hasError('required')">
+                    Description is required
+                </mat-error>
+            </mat-form-field>
+
+            <div class="button-group">
+                <button mat-raised-button color="primary" type="submit" [disabled]="editDepartmentForm.invalid">{{ isNew
+                    ?
+                    'Add' : 'Save' }}</button>
+                <button mat-raised-button type="button" (click)="onCancel()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,86 @@
+<div class="dialog-container">
+    <h1 mat-dialog-title>{{ isNew ? 'Add Doctor' : 'Edit Doctor' }}</h1>
+    <div mat-dialog-content>
+        <form [formGroup]="editDoctorForm" (ngSubmit)="onSubmit()">
+
+            <!-- Profile Photo Section (Only for existing doctors) -->
+            <div class="profile-photo-section" *ngIf="!isNew">
+                <ng-container *ngIf="previewUrl; else placeholder">
+                    <img [src]="previewUrl" alt="Profile Photo" class="profile-photo" />
+                </ng-container>
+                <ng-template #placeholder>
+                    <mat-icon class="profile-placeholder">account_circle</mat-icon>
+                </ng-template>
+                <div class="photo-buttons">
+                    <button mat-raised-button color="primary" type="button" (click)="uploadPhoto()">Upload</button>
+                    <button mat-raised-button type="button" (click)="clearPhoto()" [disabled]="!previewUrl">Clear
+                        Photo</button>
+                    <input type="file" accept="image/*" #fileInput class="hidden-file-input"
+                        title="Upload Profile Photo" (change)="onFileSelected($event)" />
+                </div>
+            </div>
+
+            <mat-form-field *ngIf="isSystemAdmin && !isNew">
+                <mat-label>Doctor ID</mat-label>
+                <input matInput formControlName="id" placeholder="Doctor ID" />
+            </mat-form-field>
+
+            <mat-form-field>
+                <mat-label>Name</mat-label>
+                <input matInput formControlName="name" placeholder="Name" required />
+                <mat-error *ngIf="editDoctorForm.get('name')?.hasError('required')">
+                    Name is required
+                </mat-error>
+            </mat-form-field>
+
+            <mat-form-field>
+                <mat-label>Degrees</mat-label>
+                <textarea matInput formControlName="degrees" placeholder="Degrees" required></textarea>
+                <mat-error *ngIf="editDoctorForm.get('degrees')?.hasError('required')">
+                    Degrees are required
+                </mat-error>
+            </mat-form-field>
+
+            <mat-form-field>
+                <mat-label>Phone Number</mat-label>
+                <input matInput formControlName="phoneNumber" placeholder="Phone Number" />
+                <mat-error *ngIf="editDoctorForm.get('phoneNumber')?.hasError('required')">
+                    Phone number is required
+                </mat-error>
+                <mat-error *ngIf="editDoctorForm.get('phoneNumber')?.hasError('pattern')">
+                    Phone number format is invalid
+                </mat-error>
+            </mat-form-field>
+
+            <mat-form-field>
+                <mat-label>Department</mat-label>
+                <mat-select formControlName="departmentId" required>
+                    <mat-option *ngFor="let department of departments" [value]="department.id">
+                        {{ department.name }}
+                    </mat-option>
+                </mat-select>
+                <mat-error *ngIf="editDoctorForm.get('departmentId')?.hasError('required')">
+                    Department is required
+                </mat-error>
+            </mat-form-field>
+
+            <mat-form-field>
+                <mat-label>Hospital</mat-label>
+                <mat-select formControlName="hospitalId" required>
+                    <mat-option *ngFor="let hospital of hospitals" [value]="hospital.id">
+                        {{ hospital.name }}, {{ hospital.neighborhood }}, {{ hospital.city }}
+                    </mat-option>
+                </mat-select>
+                <mat-error *ngIf="editDoctorForm.get('hospitalId')?.hasError('required')">
+                    Hospital is required
+                </mat-error>
+            </mat-form-field>
+
+            <div class="button-group">
+                <button mat-raised-button color="primary" type="submit" [disabled]="editDoctorForm.invalid">{{ isNew ?
+                    'Add' : 'Save' }}</button>
+                <button mat-raised-button type="button" (click)="onCancel()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>

@@ -1,8 +1,9 @@
-import { Component, Inject, ViewChild, ElementRef } from '@angular/core';
+import { Component, Inject, ViewChild, ElementRef, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { User } from '../../models/user.model';
 import { PhotoStorageService } from '../../services/photo-storage.service';
+import { AuthService } from '../../services/auth.service';
 import { CommonModule } from '@angular/common';
 import { MatInputModule } from '@angular/material/input';
 import { MatRadioModule } from '@angular/material/radio';
@@ -29,9 +30,10 @@ import { LoadingService } from '../../services/loading.service';
   templateUrl: './edit-user-dialog.component.html',
   styleUrls: ['./edit-user-dialog.component.css']
 })
-export class EditUserDialogComponent {
+export class EditUserDialogComponent implements OnInit {
   editUserForm: FormGroup;
   isNew: boolean = false;
+  isSystemAdmin: boolean = false;
   isPasswordVisible: boolean = false;
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
   selectedFile: File | null = null;
@@ -43,6 +45,7 @@ export class EditUserDialogComponent {
     private dialogRef: MatDialogRef<EditUserDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: { user: User | null },
     private photoStorageService: PhotoStorageService,
+    private authService: AuthService,
     private snackBar: MatSnackBar,
     private loadingService: LoadingService
   ) {
@@ -63,6 +66,24 @@ export class EditUserDialogComponent {
 
     if (!this.isNew && data.user?.profilePictureUri) {
       this.previewUrl = data.user.profilePictureUri;
+    }
+  }
+
+  async ngOnInit(): Promise<void> {
+    await this.checkIfSystemAdmin();
+  }
+
+  /**
+   * Checks if the current user is a system admin.
+   */
+  private async checkIfSystemAdmin(): Promise<void> {
+    try {
+      const currentUser = await this.authService.getCurrentUser();
+      if (currentUser) {
+        this.isSystemAdmin = currentUser.isSystemAdmin;
+      }
+    } catch (error) {
+      console.error('Error checking if user is system admin', error);
     }
   }
 

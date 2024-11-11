@@ -66,12 +66,14 @@ export class ManageUsersComponent implements OnInit {
           .subscribe({
             next: (users: User[]) => {
               this.users = users;
+              this.users.sort((a, b) => a.firstName.localeCompare(b.firstName)
+                || a.lastName.localeCompare(b.lastName));
               this.loadingService.hide();
             },
             error: (error: any) => {
               console.error('Error loading users', error);
               this.loadingService.hide();
-              this.snackBar.open('Failed to load users', 'Dismiss', 
+              this.snackBar.open('Failed to load users', 'Dismiss',
                 { duration: 5000 });
             }
           });
@@ -89,8 +91,6 @@ export class ManageUsersComponent implements OnInit {
 
   /**
    * Opens the dialog to add a new user.
-   * After the dialog is closed, if a new user is created, it triggers the user subscription
-   * to update the users list automatically.
    */
   async addUser(): Promise<void> {
     const dialogRef = this.dialog.open(EditUserDialogComponent, {
@@ -126,8 +126,6 @@ export class ManageUsersComponent implements OnInit {
 
   /**
    * Opens the dialog to edit an existing user.
-   * After the dialog is closed, if the user is updated, it triggers the user subscription
-   * to update the users list automatically.
    *
    * @param user The user to be edited.
    */
@@ -166,7 +164,6 @@ export class ManageUsersComponent implements OnInit {
 
   /**
    * Opens a confirmation dialog and deletes the user if confirmed.
-   * After deletion, the user subscription updates the users list automatically.
    *
    * @param user The user to be deleted.
    */

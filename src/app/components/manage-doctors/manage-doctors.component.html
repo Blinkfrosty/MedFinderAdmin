@@ -1,1 +1,22 @@
-<p>manage-doctors works!</p>
+<div class="doctor-list">
+    <div class="header">
+        <h2>Manage Doctors</h2>
+        <button mat-raised-button color="primary" (click)="addDoctor()">Add Doctor</button>
+    </div>
+    <mat-list>
+        <mat-list-item *ngFor="let doctorItem of doctorListItems">
+            <div class="list-item-content">
+                <div class="doctor-info">
+                    <div class="doctor-name">{{ doctorItem.doctor.name }}</div>
+                    <div>{{ doctorItem.departmentName }}</div>
+                    <div>{{ doctorItem.hospitalName }}, {{ doctorItem.hospitalNeighborhood }}, {{
+                        doctorItem.hospitalCity }}</div>
+                </div>
+                <div class="button-group">
+                    <button mat-raised-button color="primary" (click)="editDoctor(doctorItem.doctor)">Edit</button>
+                    <button mat-raised-button color="warn" (click)="deleteDoctor(doctorItem.doctor)">Delete</button>
+                </div>
+            </div>
+        </mat-list-item>
+    </mat-list>
+</div>

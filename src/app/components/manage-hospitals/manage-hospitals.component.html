@@ -1,1 +1,20 @@
-<p>manage-hospitals works!</p>
+<div class="hospital-list">
+    <div class="header">
+        <h2>Manage Hospitals</h2>
+        <button mat-raised-button color="primary" (click)="addHospital()">Add Hospital</button>
+    </div>
+    <mat-list>
+        <mat-list-item *ngFor="let hospital of hospitals">
+            <div class="list-item-content">
+                <div class="hospital-info">
+                    <div class="hospital-name">{{ hospital.name }}</div>
+                    <div>{{ hospital.neighborhood }}, {{ hospital.city }}</div>
+                </div>
+                <div class="button-group">
+                    <button mat-raised-button color="primary" (click)="editHospital(hospital)">Edit</button>
+                    <button mat-raised-button color="warn" (click)="deleteHospital(hospital)">Delete</button>
+                </div>
+            </div>
+        </mat-list-item>
+    </mat-list>
+</div>

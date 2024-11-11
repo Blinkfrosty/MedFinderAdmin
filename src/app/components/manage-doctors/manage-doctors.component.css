@@ -1,0 +1,58 @@
+.doctor-list {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+mat-list {
+    flex: 1;
+    overflow: auto;
+    border: 3px solid #ccc;
+    border-radius: 8px;
+}
+
+mat-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 3px solid #eee;
+    padding: 28px 20px;
+    min-height: 80px;
+}
+
+mat-list-item:last-child {
+    border-bottom: none;
+}
+
+.list-item-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.doctor-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.doctor-name {
+    font-weight: bold;
+}
+
+.button-group {
+    display: flex;
+    gap: 8px;
+}
+
+button {
+    height: 36px;
+}

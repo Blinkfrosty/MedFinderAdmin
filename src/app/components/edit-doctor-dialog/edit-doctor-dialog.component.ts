@@ -14,8 +14,11 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { LoadingService } from '../../services/loading.service';
 import { firstValueFrom } from 'rxjs';
+import { TimeMapping } from '../../helpers/time-mapping.helper';
+import { OfficeHours } from '../../models/office-hours.model';
 
 @Component({
   selector: 'app-edit-doctor-dialog',
@@ -27,7 +30,8 @@ import { firstValueFrom } from 'rxjs';
     MatSelectModule,
     MatButtonModule,
     MatIconModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    MatCheckboxModule
   ],
   templateUrl: './edit-doctor-dialog.component.html',
   styleUrls: ['./edit-doctor-dialog.component.css']
@@ -42,6 +46,7 @@ export class EditDoctorDialogComponent implements OnInit {
   wasPhotoCleared: boolean = false;
   departments: Department[] = [];
   hospitals: Hospital[] = [];
+  times: string[] = TimeMapping.getAll12HourTimes();
 
   constructor(
     private fb: FormBuilder,
@@ -62,17 +67,86 @@ export class EditDoctorDialogComponent implements OnInit {
       phoneNumber: [data.doctor ? data.doctor.phoneNumber : '',
       [Validators.required, Validators.pattern(/^[+\d\-()\s]+$/)]],
       departmentId: [data.doctor ? data.doctor.departmentId : '', Validators.required],
-      hospitalId: [data.doctor ? data.doctor.hospitalId : '', Validators.required]
+      hospitalId: [data.doctor ? data.doctor.hospitalId : '', Validators.required],
+      officeHours: this.fb.group({
+        monday: this.createDaySchedule(),
+        tuesday: this.createDaySchedule(),
+        wednesday: this.createDaySchedule(),
+        thursday: this.createDaySchedule(),
+        friday: this.createDaySchedule(),
+        saturday: this.createDaySchedule(),
+        sunday: this.createDaySchedule(),
+      })
     });
 
     if (!this.isNew && data.doctor?.profilePictureUri) {
       this.previewUrl = data.doctor.profilePictureUri;
+    }
+
+    if (!this.isNew && data.doctor?.officeHours) {
+      this.populateOfficeHours(data.doctor.officeHours);
     }
   }
 
   async ngOnInit(): Promise<void> {
     await this.loadDepartmentsAndHospitals();
     await this.checkIfSystemAdmin();
+    this.setupOfficeHoursListeners();
+  }
+
+  /**
+   * Creates a form group for a day's schedule.   * 
+   * 
+   * @returns A form group for a day's schedule.
+   */
+  private createDaySchedule(): FormGroup {
+    return this.fb.group({
+      available: [false],
+      startTime: [{ value: '', disabled: true }],
+      endTime: [{ value: '', disabled: true }]
+    });
+  }
+
+  /**
+   * Populates the office hours form group with the provided office hours data.
+   * 
+   * @param officeHours The office hours data to populate the form group with
+   */
+  private populateOfficeHours(officeHours: OfficeHours): void {
+    Object.keys(officeHours).forEach(day => {
+      const dayGroup = this.editDoctorForm.get(['officeHours', day]) as FormGroup;
+      dayGroup.patchValue({
+        available: officeHours[day as keyof OfficeHours].available,
+        startTime: TimeMapping.get12HourTime(officeHours[day as keyof OfficeHours].startTime) || '',
+        endTime: TimeMapping.get12HourTime(officeHours[day as keyof OfficeHours].endTime) || ''
+      });
+      if (officeHours[day as keyof OfficeHours].available) {
+        dayGroup.get('startTime')?.enable();
+        dayGroup.get('endTime')?.enable();
+      }
+    });
+  }
+
+  /**
+   * Sets up listeners for the 'available' checkbox to enable/disable time selectors.
+   */
+  private setupOfficeHoursListeners(): void {
+    const officeHoursGroup = this.editDoctorForm.get('officeHours') as FormGroup;
+    Object.keys(officeHoursGroup.controls).forEach(day => {
+      const dayGroup = officeHoursGroup.get(day) as FormGroup;
+      const availableControl = dayGroup.get('available');
+      availableControl?.valueChanges.subscribe((isAvailable: boolean) => {
+        if (isAvailable) {
+          dayGroup.get('startTime')?.enable();
+          dayGroup.get('endTime')?.enable();
+        } else {
+          dayGroup.get('startTime')?.disable();
+          dayGroup.get('endTime')?.disable();
+          dayGroup.get('startTime')?.reset('');
+          dayGroup.get('endTime')?.reset('');
+        }
+      });
+    });
   }
 
   /**
@@ -166,6 +240,7 @@ export class EditDoctorDialogComponent implements OnInit {
   async onSubmit(): Promise<void> {
     if (this.editDoctorForm.valid) {
       const formValue = this.editDoctorForm.value;
+      const officeHours: OfficeHours = {} as OfficeHours;
 
       let profilePictureUri = this.data.doctor ? this.data.doctor.profilePictureUri : '';
 
@@ -201,6 +276,23 @@ export class EditDoctorDialogComponent implements OnInit {
         }
       }
 
+      Object.keys(formValue.officeHours).forEach(day => {
+        const dayValue = formValue.officeHours[day];
+        if (dayValue.available) {
+          officeHours[day as keyof OfficeHours] = {
+            available: true,
+            startTime: TimeMapping.get24HourTime(dayValue.startTime) || '',
+            endTime: TimeMapping.get24HourTime(dayValue.endTime) || ''
+          };
+        } else {
+          officeHours[day as keyof OfficeHours] = {
+            available: false,
+            startTime: '',
+            endTime: ''
+          };
+        }
+      });
+
       const doctorData = {
         id: this.data.doctor?.id || '',
         name: formValue.name,
@@ -208,7 +300,8 @@ export class EditDoctorDialogComponent implements OnInit {
         phoneNumber: formValue.phoneNumber,
         profilePictureUri: profilePictureUri,
         departmentId: formValue.departmentId,
-        hospitalId: formValue.hospitalId
+        hospitalId: formValue.hospitalId,
+        officeHours: officeHours
       };
 
       this.dialogRef.close(doctorData);

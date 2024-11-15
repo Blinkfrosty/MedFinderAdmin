@@ -1,3 +1,5 @@
+import { OfficeHours } from './office-hours.model';
+
 /**
  * Doctor data model
  */
@@ -9,4 +11,5 @@ export interface Doctor {
     profilePictureUri: string;
     departmentId: string;
     hospitalId: string;
+    officeHours: OfficeHours;
 }

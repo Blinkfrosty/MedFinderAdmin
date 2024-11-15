@@ -103,14 +103,16 @@ export class ManageDoctorsComponent implements OnInit, OnDestroy {
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         this.loadingService.show();
-        this.doctorService.addDoctor(result.name, result.degrees, result.phoneNumber, result.profilePictureUri, result.departmentId, result.hospitalId).then(() => {
-          this.loadingService.hide();
-          this.snackBar.open('Doctor added successfully', 'Dismiss', { duration: 5000 });
-        }).catch(error => {
-          console.error('Error adding doctor', error);
-          this.loadingService.hide();
-          this.snackBar.open('Failed to add doctor', 'Dismiss', { duration: 5000 });
-        });
+        this.doctorService.addDoctor(result.name, result.degrees, result.phoneNumber,
+          result.profilePictureUri, result.departmentId, result.hospitalId, result.officeHours)
+          .then(() => {
+            this.loadingService.hide();
+            this.snackBar.open('Doctor added successfully', 'Dismiss', { duration: 5000 });
+          }).catch(error => {
+            console.error('Error adding doctor', error);
+            this.loadingService.hide();
+            this.snackBar.open('Failed to add doctor', 'Dismiss', { duration: 5000 });
+          });
       }
     });
   }
@@ -125,7 +127,8 @@ export class ManageDoctorsComponent implements OnInit, OnDestroy {
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         this.loadingService.show();
-        this.doctorService.setDoctorById(doctor.id, result.name, result.degrees, result.phoneNumber, result.profilePictureUri, result.departmentId, result.hospitalId)
+        this.doctorService.setDoctorById(doctor.id, result.name, result.degrees, result.phoneNumber,
+          result.profilePictureUri, result.departmentId, result.hospitalId, result.officeHours)
           .then(() => {
             this.loadingService.hide();
             this.snackBar.open('Doctor updated successfully', 'Dismiss', { duration: 5000 });
@@ -159,7 +162,7 @@ export class ManageDoctorsComponent implements OnInit, OnDestroy {
     dialogRef.afterClosed().subscribe(async confirmed => {
       if (confirmed) {
         this.loadingService.show();
-        
+
         try {
           if (doctor.profilePictureUri) {
             await this.photoStorageService.deleteDoctorPhoto(doctor.id);

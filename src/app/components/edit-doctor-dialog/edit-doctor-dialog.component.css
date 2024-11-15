@@ -2,11 +2,15 @@
     padding: 24px;
     display: flex;
     flex-direction: column;
-    width: 450px;
-    max-height: 100vh;
+    width: 550px;
+    max-height: 90vh;
     max-width: 100vw;
     overflow-y: auto;
     flex: 1 1 auto;
+}
+
+.dialog-container label {
+    font-weight: bold;
 }
 
 .mat-dialog-content {
@@ -47,8 +51,31 @@ mat-radio-button {
     min-width: 100px;
 }
 
-.dialog-container label {
-    font-weight: bold;
+/* Office Hours Section */
+.office-hours-title {
+    text-align: center;
+    margin-top: 24px;
+    margin-bottom: 16px;
+}
+
+.day-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.day-name {
+    width: 100px;
+    text-transform: capitalize;
+}
+
+.office-hour-checkbox {
+    margin-left: 2px;
+}
+
+.time-form-field {
+    width: 130px;
+    margin-left: 18px;
 }
 
 /* Profile Photo Section */

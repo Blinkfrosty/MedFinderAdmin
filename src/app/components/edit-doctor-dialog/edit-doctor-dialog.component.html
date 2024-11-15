@@ -76,6 +76,38 @@
                 </mat-error>
             </mat-form-field>
 
+            <!-- Office Hours Section -->
+            <h3 class="office-hours-title">Office Hours</h3>
+            <div formGroupName="officeHours">
+                <div *ngFor="let day of ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']"
+                    class="day-row" [formGroupName]="day">
+
+                    <div class="day-name">{{ day | titlecase }}</div>
+
+                    <mat-checkbox color="primary" class="office-hour-checkbox" formControlName="available">
+                        Available
+                    </mat-checkbox>
+
+                    <mat-form-field class="time-form-field">
+                        <mat-label>Start Time</mat-label>
+                        <mat-select formControlName="startTime">
+                            <mat-option *ngFor="let time of times" [value]="time">
+                                {{ time }}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+
+                    <mat-form-field class="time-form-field">
+                        <mat-label>End Time</mat-label>
+                        <mat-select formControlName="endTime">
+                            <mat-option *ngFor="let time of times" [value]="time">
+                                {{ time }}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+            </div>
+
             <div class="button-group">
                 <button mat-raised-button color="primary" type="submit" [disabled]="editDoctorForm.invalid">{{ isNew ?
                     'Add' : 'Save' }}</button>

@@ -3,6 +3,7 @@ import { Database, ref, onValue, off, set, remove, child } from '@angular/fire/d
 import { Doctor } from '../models/doctor.model';
 import { v4 as uuidv4 } from 'uuid';
 import { Observable } from 'rxjs';
+import { OfficeHours } from '../models/office-hours.model';
 
 /**
  * Service for accessing and managing doctor data in the Firebase Realtime Database.
@@ -86,9 +87,10 @@ export class DoctorDataAccessService {
         phoneNumber: string,
         profilePictureUri: string,
         departmentId: string,
-        hospitalId: string
+        hospitalId: string,
+        officeHours: OfficeHours
     ): Promise<void> {
-        const doctor: Doctor = { id, name, degrees, phoneNumber, profilePictureUri, departmentId, hospitalId };
+        const doctor: Doctor = { id, name, degrees, phoneNumber, profilePictureUri, departmentId, hospitalId, officeHours };
         const doctorRef = child(ref(this.db, this.DOCTORS_ROOT), id);
         await set(doctorRef, doctor);
     }
@@ -112,10 +114,11 @@ export class DoctorDataAccessService {
         phoneNumber: string,
         profilePictureUri: string,
         departmentId: string,
-        hospitalId: string
+        hospitalId: string,
+        officeHours: OfficeHours
     ): Promise<void> {
         const id = uuidv4().replace(/-/g, '');
-        const doctor: Doctor = { id, name, degrees, phoneNumber, profilePictureUri, departmentId, hospitalId };
+        const doctor: Doctor = { id, name, degrees, phoneNumber, profilePictureUri, departmentId, hospitalId, officeHours };
         const doctorRef = child(ref(this.db, this.DOCTORS_ROOT), id);
         await set(doctorRef, doctor);
     }

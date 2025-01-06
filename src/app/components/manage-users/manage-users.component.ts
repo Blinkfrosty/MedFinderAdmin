@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 import { MatListModule } from '@angular/material/list';
 import { EditUserDialogComponent } from '../edit-user-dialog/edit-user-dialog.component';
@@ -20,7 +21,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 @Component({
   selector: 'app-manage-users',
   standalone: true,
-  imports: [CommonModule, MatListModule, MatButtonModule, MatSnackBarModule],
+  imports: [CommonModule, MatListModule, MatButtonModule, MatTooltipModule, MatSnackBarModule],
   templateUrl: './manage-users.component.html',
   styleUrls: ['./manage-users.component.css']
 })
@@ -32,6 +33,7 @@ export class ManageUsersComponent implements OnInit {
    */
   users: User[] = [];
   private usersSubscription?: Subscription;
+  functionsDisabled: boolean;
 
   constructor(
     private dialog: MatDialog,
@@ -39,8 +41,11 @@ export class ManageUsersComponent implements OnInit {
     private authService: AuthService,
     private loadingService: LoadingService,
     private photoStorageService: PhotoStorageService,
-    private snackBar: MatSnackBar
-  ) { }
+    private snackBar: MatSnackBar,
+    @Inject('DISABLE_FUNCTIONS') private disableFunctionsConfig: boolean
+  ) { 
+    this.functionsDisabled = this.disableFunctionsConfig;
+  }
 
   ngOnInit(): void {
     this.initializeUserSubscription();

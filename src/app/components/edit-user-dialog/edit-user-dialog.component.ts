@@ -6,6 +6,7 @@ import { PhotoStorageService } from '../../services/photo-storage.service';
 import { AuthService } from '../../services/auth.service';
 import { CommonModule } from '@angular/common';
 import { MatInputModule } from '@angular/material/input';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -22,6 +23,7 @@ import { LoadingService } from '../../services/loading.service';
     CommonModule,
     ReactiveFormsModule,
     MatInputModule,
+    MatTooltipModule,
     MatRadioModule,
     MatButtonModule,
     MatIconModule,
@@ -39,6 +41,7 @@ export class EditUserDialogComponent implements OnInit {
   selectedFile: File | null = null;
   previewUrl: string | null = null;
   wasPhotoCleared: boolean = false;
+  functionsDisabled: boolean;
 
   constructor(
     private fb: FormBuilder,
@@ -47,19 +50,23 @@ export class EditUserDialogComponent implements OnInit {
     private photoStorageService: PhotoStorageService,
     private authService: AuthService,
     private snackBar: MatSnackBar,
-    private loadingService: LoadingService
+    private loadingService: LoadingService,
+    @Inject('DISABLE_FUNCTIONS') private disableFunctionsConfig: boolean
   ) {
     this.isNew = !data.user;
+    this.functionsDisabled = this.disableFunctionsConfig;
     this.editUserForm = this.fb.group({
       id: [{ value: data.user ? data.user.id : '', disabled: true }],
-      email: [data.user ? data.user.email : '', [Validators.required, Validators.email]],
+      email: [
+        { value: data.user ? data.user.email : '', disabled: this.functionsDisabled },
+        [Validators.required, Validators.email]],
       firstName: [data.user ? data.user.firstName : '', Validators.required],
       lastName: [data.user ? data.user.lastName : '', Validators.required],
       phoneNumber: [data.user ? data.user.phoneNumber : '', [Validators.pattern(/^[+\d\-()\s]+$/)]],
       gender: [data.user ? data.user.genderCode : '', Validators.required],
       role: [data.user ? this.getUserRole(data.user) : '', Validators.required],
       password: [
-        '',
+        { value: '', disabled: this.functionsDisabled },
         this.isNew ? [Validators.required] : []
       ]
     });
@@ -151,7 +158,7 @@ export class EditUserDialogComponent implements OnInit {
    */
   async onSubmit(): Promise<void> {
     if (this.editUserForm.valid) {
-      const formValue = this.editUserForm.value;
+      const formValue = this.editUserForm.getRawValue();
 
       let profilePictureUri = this.data.user ? this.data.user.profilePictureUri : '';
 

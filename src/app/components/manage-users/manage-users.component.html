@@ -1,7 +1,11 @@
 <div class="user-list">
     <div class="header">
         <h2>Manage Users</h2>
-        <button mat-raised-button color="primary" (click)="addUser()">Add User</button>
+        <span 
+            [matTooltip]="functionsDisabled ? 'Auth functions are disabled' : null">
+            <button mat-raised-button color="primary" (click)="addUser()" 
+                [disabled]="functionsDisabled">Add User</button>
+        </span>
     </div>
     <mat-list>
         <mat-list-item *ngFor="let user of users">
@@ -12,7 +16,11 @@
                 </div>
                 <div class="button-group">
                     <button mat-raised-button color="primary" (click)="editUser(user)">Edit</button>
-                    <button mat-raised-button color="warn" (click)="deleteUser(user)">Delete</button>
+                    <span 
+                        [matTooltip]="functionsDisabled ? 'Auth functions are disabled' : null">
+                        <button  mat-raised-button color="warn" (click)="deleteUser(user)"
+                            [disabled]="functionsDisabled">Delete</button>
+                    </span>
                 </div>
             </div>
         </mat-list-item>

@@ -31,6 +31,8 @@ export const appConfig: ApplicationConfig = {
       useFactory: initializeAppFactory,
       deps: [AuthService],
       multi: true
-    }
+    },
+    { provide: 'EMULATE_FUNCTIONS', useValue: true },
+    { provide: 'DISABLE_FUNCTIONS', useValue: true }
   ]
 };

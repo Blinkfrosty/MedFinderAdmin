@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Inject, Injectable } from '@angular/core';
 import {
     Auth, signInWithEmailAndPassword, UserCredential,
     onAuthStateChanged, User as FirebaseUser, browserLocalPersistence
@@ -36,10 +36,12 @@ export class AuthService {
         private auth: Auth,
         private functions: Functions,
         private userDataAccessService: UserDataAccessService,
-        private router: Router
+        private router: Router,
+        @Inject('EMULATE_FUNCTIONS') private emulateFunctions: boolean
     ) {
-        // TODO: Enable this when locally emulating functions for testing
-        connectFunctionsEmulator(this.functions, 'localhost', 5001);
+        if (this.emulateFunctions) {
+            connectFunctionsEmulator(this.functions, 'localhost', 5001);
+        }
     }
 
     /**

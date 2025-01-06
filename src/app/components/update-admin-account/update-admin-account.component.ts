@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, Inject, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AuthService } from '../../services/auth.service';
@@ -7,6 +7,7 @@ import { LoadingService } from '../../services/loading.service';
 import { User } from '../../models/user.model';
 import { CommonModule } from '@angular/common';
 import { MatInputModule } from '@angular/material/input';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -21,6 +22,7 @@ import { MatIconModule } from '@angular/material/icon';
     CommonModule,
     ReactiveFormsModule,
     MatInputModule,
+    MatTooltipModule,
     MatRadioModule,
     MatButtonModule,
     MatIconModule,
@@ -37,23 +39,28 @@ export class UpdateAdminAccountComponent implements OnInit {
   previewUrl: string | null = null;
   wasPhotoCleared: boolean = false;
   private currentUser: User | null = null;
+  functionsDisabled: boolean;
 
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
     private photoStorageService: PhotoStorageService,
     private snackBar: MatSnackBar,
-    private loadingService: LoadingService
+    private loadingService: LoadingService,
+    @Inject('DISABLE_FUNCTIONS') private disableFunctionsConfig: boolean
   ) {
+    this.functionsDisabled = this.disableFunctionsConfig;
     this.updateAdminForm = this.fb.group({
       id: [{ value: '', disabled: true }],
-      email: ['', [Validators.required, Validators.email]],
+      email: [
+        { value: '', disabled: this.functionsDisabled },
+        [Validators.required, Validators.email]],
       firstName: ['', Validators.required],
       lastName: ['', Validators.required],
       phoneNumber: ['', [Validators.pattern(/^[+\d\-()\s]+$/)]],
       gender: ['', Validators.required],
       role: ['', Validators.required],
-      password: ['']
+      password: [{ value: '', disabled: this.functionsDisabled }]
     });
   }
 
@@ -141,7 +148,7 @@ export class UpdateAdminAccountComponent implements OnInit {
       this.loadingService.show();
 
       try {
-        const formValue = this.updateAdminForm.value;
+        const formValue = this.updateAdminForm.getRawValue();
         let profilePictureUri = this.previewUrl;
 
         if (this.selectedFile) {

@@ -1,4 +1,18 @@
 {
+  "hosting": {
+    "public": "dist/med-finder-admin/browser",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  },
   "functions": {
     "source": "functions",
     "codebase": "default",
@@ -24,23 +38,12 @@
     "database": {
       "port": 9000
     },
+    "hosting": {
+      "port": 5000
+    },
     "ui": {
       "enabled": true,
       "port": 4000
     }
-  },
-  "hosting": {
-    "public": "dist/med-finder-admin",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
-    "rewrites": [
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
-    ]
   }
 }

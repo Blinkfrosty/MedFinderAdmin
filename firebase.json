@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "public": "dist/med-finder-admin/browser",
+    "public": "dist/med-finder-admin",
     "ignore": [
       "firebase.json",
       "**/.*",

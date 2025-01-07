@@ -27,9 +27,7 @@
 
             <mat-form-field>
                 <mat-label>Email</mat-label>
-                <input matInput formControlName="email" type="email" placeholder="Email"
-                    [matTooltip]="functionsDisabled ? 'Auth functions are disabled' : null"
-                    required />
+                <input matInput formControlName="email" type="email" placeholder="Email" required />
                 <mat-error *ngIf="updateAdminForm.get('email')?.hasError('required')">
                     Email is required
                 </mat-error>
@@ -84,13 +82,24 @@
             </mat-error>
 
             <mat-form-field>
-                <mat-label>Password</mat-label>
-                <input matInput formControlName="password" [type]="isPasswordVisible ? 'text' : 'password'"
-                    [matTooltip]="functionsDisabled ? 'Auth functions are disabled' : null"
+                <mat-label>New Password</mat-label>
+                <input matInput formControlName="password" [type]="isNewPasswordVisible ? 'text' : 'password'"
                     placeholder="Password" />
-                <mat-icon matSuffix (click)="isPasswordVisible = !isPasswordVisible">
-                    {{isPasswordVisible ? 'visibility' : 'visibility_off'}}
+                <mat-icon matSuffix (click)="isNewPasswordVisible = !isNewPasswordVisible">
+                    {{isNewPasswordVisible ? 'visibility' : 'visibility_off'}}
                 </mat-icon>
+            </mat-form-field>
+
+            <mat-form-field>
+                <mat-label>Current Password</mat-label>
+                <input matInput formControlName="currentPassword" [type]="isCurrentPasswordVisible ? 'text' : 'password'"
+                    placeholder="Password"/>
+                <mat-icon matSuffix (click)="isCurrentPasswordVisible = !isCurrentPasswordVisible">
+                    {{isCurrentPasswordVisible ? 'visibility' : 'visibility_off'}}
+                </mat-icon>
+                <mat-error *ngIf="updateAdminForm.get('currentPassword')?.hasError('required')">
+                    Current Password is required
+                </mat-error>
             </mat-form-field>
 
             <div class="button-group">

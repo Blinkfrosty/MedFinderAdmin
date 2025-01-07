@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@angular/core';
 import {
-    Auth, signInWithEmailAndPassword, UserCredential,
-    onAuthStateChanged, User as FirebaseUser, browserLocalPersistence
+    Auth, updateEmail, updatePassword, reauthenticateWithCredential, EmailAuthProvider, signInWithEmailAndPassword,
+    UserCredential, onAuthStateChanged, User as FirebaseUser, browserLocalPersistence
 } from '@angular/fire/auth';
 import { Router } from '@angular/router';
 import { User } from '../models/user.model';
@@ -241,13 +241,14 @@ export class AuthService {
      * @param isPatient Indicates if the user is a patient.
      * @param isHospitalAdmin Indicates if the user has hospital admin privileges.
      * @param isSystemAdmin Indicates if the user has system admin privileges.
+     * @param currentPassword The user's current password (required for email and password changes).
      * @returns A promise that resolves when the user update process is complete.
      * @throws Will throw an error if the user update process fails or the user is not found.
      */
     async updateUser(
         id: string,
         email: string,
-        password: string,
+        newPassword: string,
         firstName: string,
         lastName: string,
         phoneNumber: string,
@@ -255,40 +256,70 @@ export class AuthService {
         profilePictureUri: string,
         isPatient: boolean,
         isHospitalAdmin: boolean,
-        isSystemAdmin: boolean
+        isSystemAdmin: boolean,
+        currentPassword?: string
     ): Promise<void> {
         try {
             await this.verifyAdminPermissions();
             let isUpdatingCurrentUser = this.currentUserSubject.value?.id === id;
-
+    
             // Fetch target user data
             const targetUser = await this.userDataAccessService.getUserByUid(id);
             if (!targetUser) {
                 throw new Error('User not found');
             }
-
+    
             // Prepare update payload
-            const updatePayload: { uid: string; email?: string; password?: string } = { uid: id };
+            const updatePayload: { uid: string; email?: string; newPassword?: string;
+                currentPassword?: string } = { uid: id };
             let shouldUpdateAuth = false;
-
+    
             // Check if email has changed
             if (email !== targetUser.email) {
                 updatePayload.email = email;
                 shouldUpdateAuth = true;
             }
-
+    
             // Check if password is provided
-            if (password && password.trim() !== '') {
-                updatePayload.password = password;
+            if (newPassword && newPassword.trim() !== '') {
+                updatePayload.newPassword = newPassword;
                 shouldUpdateAuth = true;
             }
 
-            if (shouldUpdateAuth) {
-                // Update user via Firebase Cloud Function
-                const updateUserCallable = httpsCallable(this.functions, 'updateUser');
-                await updateUserCallable(updatePayload);
+            // Check if current password is provided
+            if (currentPassword && currentPassword.trim() !== '') {
+                updatePayload.currentPassword = currentPassword;
             }
-
+    
+            if (shouldUpdateAuth) {
+                if (isUpdatingCurrentUser) {
+                    // Re-authenticate current user
+                    if (this.auth.currentUser && updatePayload.currentPassword) {
+                        const credential = EmailAuthProvider.credential(this.auth.currentUser.email!, updatePayload.currentPassword);
+                        await reauthenticateWithCredential(this.auth.currentUser, credential);
+                    } else {
+                        throw new Error('Re-authentication required');
+                    }
+    
+                    // Update current user via Firebase Auth
+                    if (this.auth.currentUser) {
+                        if (updatePayload.email) {
+                            await updateEmail(this.auth.currentUser, updatePayload.email);
+                        }
+                        if (updatePayload.newPassword) {
+                            await updatePassword(this.auth.currentUser, updatePayload.newPassword);
+                        }
+                    } else {
+                        throw new Error('No authenticated user found');
+                    }
+                }
+                else {
+                    // Update user via Firebase Cloud Function
+                    const updateUserCallable = httpsCallable(this.functions, 'updateUser');
+                    await updateUserCallable(updatePayload);
+                }
+            }
+    
             // Update user data in the database
             await this.userDataAccessService.setUserByUid(
                 id,
@@ -302,7 +333,7 @@ export class AuthService {
                 isHospitalAdmin,
                 isSystemAdmin
             );
-
+    
             if (isUpdatingCurrentUser) {
                 if (shouldUpdateAuth) {
                     // Logout if email or password changed
@@ -315,6 +346,11 @@ export class AuthService {
                 }
             }
         } catch (error) {
+            if ((error as any).code === 'auth/requires-recent-login') {
+                throw new Error('Please re-authenticate to update your credentials.');
+            } else if ((error as any).code === 'auth/wrong-password') {
+                throw new Error('Incorrect password. Please check your credentials.')
+            }
             console.error('Error updating user', error);
             throw error;
         }

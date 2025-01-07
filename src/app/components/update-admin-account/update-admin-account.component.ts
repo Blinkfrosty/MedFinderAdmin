@@ -1,4 +1,4 @@
-import { Component, Inject, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AuthService } from '../../services/auth.service';
@@ -7,7 +7,6 @@ import { LoadingService } from '../../services/loading.service';
 import { User } from '../../models/user.model';
 import { CommonModule } from '@angular/common';
 import { MatInputModule } from '@angular/material/input';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -22,7 +21,6 @@ import { MatIconModule } from '@angular/material/icon';
     CommonModule,
     ReactiveFormsModule,
     MatInputModule,
-    MatTooltipModule,
     MatRadioModule,
     MatButtonModule,
     MatIconModule,
@@ -33,34 +31,33 @@ import { MatIconModule } from '@angular/material/icon';
 })
 export class UpdateAdminAccountComponent implements OnInit {
   updateAdminForm: FormGroup;
-  isPasswordVisible: boolean = false;
+  isNewPasswordVisible: boolean = false;
+  isCurrentPasswordVisible: boolean = false;
+  isCurrentPasswordEnabled: boolean = false;
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
   selectedFile: File | null = null;
   previewUrl: string | null = null;
   wasPhotoCleared: boolean = false;
   private currentUser: User | null = null;
-  functionsDisabled: boolean;
+  private originalEmail: string = '';
 
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
     private photoStorageService: PhotoStorageService,
     private snackBar: MatSnackBar,
-    private loadingService: LoadingService,
-    @Inject('DISABLE_FUNCTIONS') private disableFunctionsConfig: boolean
+    private loadingService: LoadingService
   ) {
-    this.functionsDisabled = this.disableFunctionsConfig;
     this.updateAdminForm = this.fb.group({
       id: [{ value: '', disabled: true }],
-      email: [
-        { value: '', disabled: this.functionsDisabled },
-        [Validators.required, Validators.email]],
+      email: ['', [Validators.required, Validators.email]],
       firstName: ['', Validators.required],
       lastName: ['', Validators.required],
       phoneNumber: ['', [Validators.pattern(/^[+\d\-()\s]+$/)]],
       gender: ['', Validators.required],
       role: ['', Validators.required],
-      password: [{ value: '', disabled: this.functionsDisabled }]
+      password: [''],
+      currentPassword: [{ value: '', disabled: true }]
     });
   }
 
@@ -78,15 +75,49 @@ export class UpdateAdminAccountComponent implements OnInit {
           gender: this.currentUser.genderCode,
           role: this.getUserRole(this.currentUser)
         });
+        this.originalEmail = this.currentUser.email;
         if (this.currentUser.profilePictureUri) {
           this.previewUrl = this.currentUser.profilePictureUri;
         }
       }
+
+      // Subscribe to password field changes
+      this.updateAdminForm.get('password')?.valueChanges.subscribe(() => {
+        this.evaluateCurrentPasswordRequirement();
+      });
+
+      // Subscribe to email field changes
+      this.updateAdminForm.get('email')?.valueChanges.subscribe(() => {
+        this.evaluateCurrentPasswordRequirement();
+      });
     } catch (error) {
       console.error('Error loading current user', error);
       this.snackBar.open('Failed to load account information', 'Dismiss', { duration: 5000 });
     } finally {
       this.loadingService.hide();
+    }
+  }
+
+  /**
+   * Evaluates whether the currentPassword field should be enabled and required.
+   */
+  private evaluateCurrentPasswordRequirement(): void {
+    const newPassword = this.updateAdminForm.get('password')?.value;
+    const email = this.updateAdminForm.get('email')?.value;
+    const isPasswordEntered = newPassword && newPassword.trim() !== '';
+    const isEmailChanged = email !== this.originalEmail;
+
+    if (isPasswordEntered || isEmailChanged) {
+      this.updateAdminForm.get('currentPassword')?.enable();
+      this.updateAdminForm.get('currentPassword')?.setValidators([Validators.required]);
+      this.updateAdminForm.get('currentPassword')?.updateValueAndValidity();
+      this.isCurrentPasswordEnabled = true;
+    } else {
+      this.updateAdminForm.get('currentPassword')?.disable();
+      this.updateAdminForm.get('currentPassword')?.clearValidators();
+      this.updateAdminForm.get('currentPassword')?.updateValueAndValidity();
+      this.isCurrentPasswordEnabled = false;
+      this.updateAdminForm.get('currentPassword')?.setValue('');
     }
   }
 
@@ -169,13 +200,17 @@ export class UpdateAdminAccountComponent implements OnInit {
           profilePictureUri ?? '',
           formValue.role === 'patient',
           formValue.role === 'hospitalAdmin',
-          formValue.role === 'systemAdmin'
+          formValue.role === 'systemAdmin',
+          formValue.currentPassword // Pass currentPassword for re-authentication
         );
 
         this.snackBar.open('Account updated successfully', 'Dismiss', { duration: 5000 });
+
+        // Update the originalEmail to the new email after successful update
+        this.originalEmail = formValue.email;
       } catch (error: any) {
         console.error('Error updating account', error);
-        this.snackBar.open('Failed to update account', 'Dismiss', { duration: 5000 });
+        this.snackBar.open(error.message, 'Dismiss', { duration: 5000 });
       } finally {
         this.loadingService.hide();
       }

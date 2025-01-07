@@ -13,6 +13,10 @@ import { MatDialog } from '@angular/material/dialog';
 import { LoadingService } from '../../services/loading.service';
 import { PhotoStorageService } from '../../services/photo-storage.service';
 import { EditDoctorDialogComponent } from '../edit-doctor-dialog/edit-doctor-dialog.component';
+import { FormsModule } from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatIconModule } from '@angular/material/icon';
 
 /**
  * Interface representing a doctor list item.
@@ -32,12 +36,23 @@ export interface DoctorListItem {
 @Component({
   selector: 'app-manage-doctors',
   standalone: true,
-  imports: [CommonModule, MatListModule, MatButtonModule, MatSnackBarModule],
+  imports: [
+    CommonModule,
+    MatListModule,
+    MatButtonModule,
+    MatSnackBarModule,
+    FormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatIconModule
+  ],
   templateUrl: './manage-doctors.component.html',
   styleUrls: ['./manage-doctors.component.css']
 })
 export class ManageDoctorsComponent implements OnInit, OnDestroy {
   doctorListItems: DoctorListItem[] = [];
+  filteredDoctors: DoctorListItem[] = [];
+  searchTerm: string = '';
   private doctorsSubscription?: Subscription;
 
   constructor(
@@ -79,7 +94,8 @@ export class ManageDoctorsComponent implements OnInit, OnDestroy {
             } as DoctorListItem;
           }));
           this.doctorListItems = enrichedDoctors;
-          this.doctorListItems.sort((a, b) => a.doctor.name.localeCompare(b.doctor.name));
+          this.filteredDoctors = this.doctorListItems;
+          this.filteredDoctors.sort((a, b) => a.doctor.name.localeCompare(b.doctor.name));
           this.loadingService.hide();
         },
         error: (error: any) => {
@@ -93,6 +109,17 @@ export class ManageDoctorsComponent implements OnInit, OnDestroy {
       this.loadingService.hide();
       this.snackBar.open('Failed to load doctors', 'Dismiss', { duration: 5000 });
     }
+  }
+
+  /**
+   * Filters the doctors based on the search term.
+   */
+  filterDoctors(): void {
+    const term = this.searchTerm.toLowerCase();
+    this.filteredDoctors = this.doctorListItems.filter(item => 
+      item.doctor.id.toLowerCase().includes(term) ||
+      item.doctor.name.toLowerCase().includes(term)
+    );
   }
 
   /**

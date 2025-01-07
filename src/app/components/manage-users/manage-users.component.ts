@@ -13,6 +13,10 @@ import { LoadingService } from '../../services/loading.service';
 import { Subscription } from 'rxjs';
 import { PhotoStorageService } from '../../services/photo-storage.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { FormsModule } from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatIconModule } from '@angular/material/icon';
 
 /**
  * Component responsible for managing users, including displaying the user list,
@@ -21,7 +25,17 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 @Component({
   selector: 'app-manage-users',
   standalone: true,
-  imports: [CommonModule, MatListModule, MatButtonModule, MatTooltipModule, MatSnackBarModule],
+  imports: [
+    CommonModule, 
+    MatListModule, 
+    MatButtonModule, 
+    MatTooltipModule, 
+    MatSnackBarModule,
+    FormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatIconModule
+  ],
   templateUrl: './manage-users.component.html',
   styleUrls: ['./manage-users.component.css']
 })
@@ -32,8 +46,10 @@ export class ManageUsersComponent implements OnInit {
    * @type {User[]}
    */
   users: User[] = [];
+  filteredUsers: User[] = [];
   private usersSubscription?: Subscription;
   functionsDisabled: boolean;
+  searchTerm: string = '';
 
   constructor(
     private dialog: MatDialog,
@@ -71,7 +87,8 @@ export class ManageUsersComponent implements OnInit {
           .subscribe({
             next: (users: User[]) => {
               this.users = users;
-              this.users.sort((a, b) => a.firstName.localeCompare(b.firstName)
+              this.filteredUsers = users;
+              this.filteredUsers.sort((a, b) => a.firstName.localeCompare(b.firstName)
                 || a.lastName.localeCompare(b.lastName));
               this.loadingService.hide();
             },
@@ -93,6 +110,18 @@ export class ManageUsersComponent implements OnInit {
       this.snackBar.open('Failed to load users', 'Dismiss', { duration: 5000 });
     }
   }
+
+  /**
+   * Filters the users based on the search term.
+   */
+  filterUsers(): void {
+    const term = this.searchTerm.toLowerCase();
+    this.filteredUsers = this.users.filter(user => 
+        user.id.toLowerCase().includes(term) ||
+        `${user.firstName} ${user.lastName}`.toLowerCase().includes(term) ||
+        user.email.toLowerCase().includes(term)
+    );
+}
 
   /**
    * Opens the dialog to add a new user.

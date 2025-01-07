@@ -10,16 +10,31 @@ import { DeleteConfirmationDialogComponent, DeleteDialogData } from '../delete-c
 import { MatDialog } from '@angular/material/dialog';
 import { LoadingService } from '../../services/loading.service';
 import { EditHospitalDialogComponent } from '../edit-hospital-dialog/edit-hospital-dialog.component';
+import { FormsModule } from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-manage-hospitals',
   standalone: true,
-  imports: [CommonModule, MatListModule, MatButtonModule, MatSnackBarModule],
+  imports: [
+    CommonModule,
+    MatListModule,
+    MatButtonModule,
+    MatSnackBarModule,
+    FormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatIconModule
+  ],
   templateUrl: './manage-hospitals.component.html',
   styleUrls: ['./manage-hospitals.component.css']
 })
 export class ManageHospitalsComponent implements OnInit, OnDestroy {
   hospitals: Hospital[] = [];
+  filteredHospitals: Hospital[] = []; 
+  searchTerm: string = ''; 
   private hospitalsSubscription?: Subscription;
 
   constructor(
@@ -43,7 +58,8 @@ export class ManageHospitalsComponent implements OnInit, OnDestroy {
       this.hospitalsSubscription = this.hospitalService.getAllHospitals().subscribe({
         next: (hospitals: Hospital[]) => {
           this.hospitals = hospitals;
-          this.hospitals.sort((a, b) => a.name.localeCompare(b.name));
+          this.filteredHospitals = this.hospitals;
+          this.filteredHospitals.sort((a, b) => a.name.localeCompare(b.name));
           this.loadingService.hide();
         },
         error: (error: any) => {
@@ -57,6 +73,14 @@ export class ManageHospitalsComponent implements OnInit, OnDestroy {
       this.loadingService.hide();
       this.snackBar.open('Failed to load hospitals', 'Dismiss', { duration: 5000 });
     }
+  }
+
+  filterHospitals(): void {
+    const term = this.searchTerm.toLowerCase();
+    this.filteredHospitals = this.hospitals.filter(hospital => 
+      hospital.id.toLowerCase().includes(term) ||
+      hospital.name.toLowerCase().includes(term)
+    );
   }
 
   addHospital(): void {

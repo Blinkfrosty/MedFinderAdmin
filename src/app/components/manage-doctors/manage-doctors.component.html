@@ -3,8 +3,16 @@
         <h2>Manage Doctors</h2>
         <button mat-raised-button color="primary" (click)="addDoctor()">Add Doctor</button>
     </div>
+
+    <!-- Search Bar -->
+    <mat-form-field appearance="outline" class="search-bar">
+        <mat-label>Search Doctors</mat-label>
+        <input matInput placeholder="ID or Name" [(ngModel)]="searchTerm" (ngModelChange)="filterDoctors()">
+        <mat-icon matSuffix>search</mat-icon>
+    </mat-form-field>
+
     <mat-list>
-        <mat-list-item *ngFor="let doctorItem of doctorListItems">
+        <mat-list-item *ngFor="let doctorItem of filteredDoctors">
             <div class="list-item-content">
                 <div class="doctor-info">
                     <div class="doctor-name">{{ doctorItem.doctor.name }}</div>

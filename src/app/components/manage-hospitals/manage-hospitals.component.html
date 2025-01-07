@@ -3,8 +3,16 @@
         <h2>Manage Hospitals</h2>
         <button mat-raised-button color="primary" (click)="addHospital()">Add Hospital</button>
     </div>
+
+    <!-- Search Bar -->
+    <mat-form-field appearance="outline" class="search-bar">
+        <mat-label>Search Hospitals</mat-label>
+        <input matInput placeholder="ID or Name" [(ngModel)]="searchTerm" (ngModelChange)="filterHospitals()">
+        <mat-icon matSuffix>search</mat-icon>
+    </mat-form-field>
+
     <mat-list>
-        <mat-list-item *ngFor="let hospital of hospitals">
+        <mat-list-item *ngFor="let hospital of filteredHospitals">
             <div class="list-item-content">
                 <div class="hospital-info">
                     <div class="hospital-name">{{ hospital.name }}</div>

@@ -10,16 +10,31 @@ import { DeleteConfirmationDialogComponent, DeleteDialogData } from '../delete-c
 import { MatDialog } from '@angular/material/dialog';
 import { LoadingService } from '../../services/loading.service';
 import { EditDepartmentDialogComponent } from '../edit-department-dialog/edit-department-dialog.component';
+import { FormsModule } from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-manage-departments',
   standalone: true,
-  imports: [CommonModule, MatListModule, MatButtonModule, MatSnackBarModule],
+  imports: [
+    CommonModule,
+    MatListModule,
+    MatButtonModule,
+    MatSnackBarModule,
+    FormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatIconModule
+  ],
   templateUrl: './manage-departments.component.html',
   styleUrls: ['./manage-departments.component.css']
 })
 export class ManageDepartmentsComponent implements OnInit, OnDestroy {
   departments: Department[] = [];
+  filteredDepartments: Department[] = [];
+  searchTerm: string = '';
   private departmentsSubscription?: Subscription;
 
   constructor(
@@ -43,7 +58,8 @@ export class ManageDepartmentsComponent implements OnInit, OnDestroy {
       this.departmentsSubscription = this.departmentService.getAllDepartments().subscribe({
         next: (departments: Department[]) => {
           this.departments = departments;
-          this.departments.sort((a, b) => a.name.localeCompare(b.name));
+          this.filteredDepartments = departments;
+          this.filteredDepartments.sort((a, b) => a.name.localeCompare(b.name));
           this.loadingService.hide();
         },
         error: (error: any) => {
@@ -59,6 +75,20 @@ export class ManageDepartmentsComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Filters the departments based on the search term.
+   */
+  filterDepartments(): void {
+    const term = this.searchTerm.toLowerCase();
+    this.filteredDepartments = this.departments.filter(dept => 
+      dept.id.toLowerCase().includes(term) ||
+      dept.name.toLowerCase().includes(term)
+    );
+  }
+
+  /**
+   * Adds a new department to the database.
+   */
   addDepartment(): void {
     const dialogRef = this.dialog.open(EditDepartmentDialogComponent, { data: {} });
     dialogRef.afterClosed().subscribe(result => {
@@ -76,6 +106,11 @@ export class ManageDepartmentsComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Opens the dialog to edit an existing department.
+   * 
+   * @param department The department to edit.
+   */
   editDepartment(department: Department): void {
     const dialogRef = this.dialog.open(EditDepartmentDialogComponent, { data: { department } });
     dialogRef.afterClosed().subscribe(result => {
@@ -95,6 +130,11 @@ export class ManageDepartmentsComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Deletes the specified department.
+   * 
+   * @param department The department to delete.
+   */
   deleteDepartment(department: Department): void {
     const dialogData: DeleteDialogData = {
       title: 'Delete Department',

@@ -3,8 +3,16 @@
         <h2>Manage Departments</h2>
         <button mat-raised-button color="primary" (click)="addDepartment()">Add Department</button>
     </div>
+
+    <!-- Search Bar -->
+    <mat-form-field appearance="outline" class="search-bar">
+        <mat-label>Search Departments</mat-label>
+        <input matInput placeholder="ID or Name" [(ngModel)]="searchTerm" (ngModelChange)="filterDepartments()">
+        <mat-icon matSuffix>search</mat-icon>
+    </mat-form-field>
+
     <mat-list>
-        <mat-list-item *ngFor="let department of departments">
+        <mat-list-item *ngFor="let department of filteredDepartments">
             <div class="list-item-content">
                 <div class="department-info">
                     <div class="department-name">{{ department.name }}</div>

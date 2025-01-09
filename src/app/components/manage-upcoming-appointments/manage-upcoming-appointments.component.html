@@ -1,0 +1,23 @@
+<div class="appointment-list">
+    <div class="header">
+        <h2>Manage Upcoming Appointments</h2>
+        <button mat-raised-button color="primary" (click)="addAppointment()">Add Appointment</button>
+    </div>
+
+    <mat-list>
+        <mat-list-item *ngFor="let item of filteredAppointments">
+            <div class="list-item-content">
+                <div class="appointment-info">
+                    <div class="doctor-name">{{ item.doctor.name }}</div>
+                    <div>Patient - {{ item.user.firstName }} {{ item.user.lastName }} ({{ item.user.email }})</div>
+                    <div>Reason - {{ item.appointment.reasonForVisit }}</div>
+                    <div>{{ item.appointment.date | date:'dd/MM/yyyy' }} {{ item.formattedTime }}</div>
+                </div>
+                <div class="button-group">
+                    <button mat-raised-button color="primary" (click)="editAppointment(item.appointment)">Edit</button>
+                    <button mat-raised-button color="warn" (click)="deleteAppointment(item.appointment)">Delete</button>
+                </div>
+            </div>
+        </mat-list-item>
+    </mat-list>
+</div>

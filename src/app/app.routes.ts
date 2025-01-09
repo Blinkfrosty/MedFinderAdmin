@@ -5,6 +5,8 @@ import { ManageUsersComponent } from './components/manage-users/manage-users.com
 import { ManageDepartmentsComponent } from './components/manage-departments/manage-departments.component';
 import { ManageDoctorsComponent } from './components/manage-doctors/manage-doctors.component';
 import { ManageHospitalsComponent } from './components/manage-hospitals/manage-hospitals.component';
+import { ManageUpcomingAppointmentsComponent } from './components/manage-upcoming-appointments/manage-upcoming-appointments.component';
+import { ManagePastAppointmentsComponent } from './components/manage-past-appointments/manage-past-appointments.component';
 import { UpdateAdminAccountComponent } from './components/update-admin-account/update-admin-account.component';
 import { AuthGuard } from './guards/auth.guard';
 import { UnauthorizedComponent } from './components/unauthorized/unauthorized.component';
@@ -22,6 +24,8 @@ export const routes: Routes = [
       { path: 'manage-departments', component: ManageDepartmentsComponent },
       { path: 'manage-doctors', component: ManageDoctorsComponent },
       { path: 'manage-hospitals', component: ManageHospitalsComponent },
+      { path: 'manage-upcoming-appointments', component: ManageUpcomingAppointmentsComponent },
+      { path: 'manage-past-appointments', component: ManagePastAppointmentsComponent },
       { path: 'update-admin-account', component: UpdateAdminAccountComponent }
     ]
   },

@@ -12,6 +12,25 @@
     margin-bottom: 20px;
 }
 
+.filter-form {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 5px;
+}
+
+.search-fields {
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.search-bar {
+    width: 300px;
+    max-width: 100%;
+}
+
 mat-list {
     flex: 1;
     overflow: auto;

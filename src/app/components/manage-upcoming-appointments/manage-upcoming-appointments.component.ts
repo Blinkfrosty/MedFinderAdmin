@@ -17,6 +17,24 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialogModule } from '@angular/material/dialog';
 import { EditAppointmentDialogComponent } from '../edit-appointment-dialog/edit-appointment-dialog.component';
+import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { DateAdapter, MAT_DATE_FORMATS, MatNativeDateModule } from '@angular/material/core';
+import { NativeDateAdapter } from '@angular/material/core';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+
+export const CUSTOM_DATE_FORMATS = {
+  parse: {
+    dateInput: 'dd/MM/yyyy',
+  },
+  display: {
+    dateInput: 'dd/MM/yyyy',
+    monthYearLabel: 'MMM YYYY',
+    dateA11yLabel: 'dd/MM/yyyy',
+    monthYearA11yLabel: 'MMMM YYYY',
+  },
+};
 
 @Component({
   selector: 'app-manage-upcoming-appointments',
@@ -26,19 +44,34 @@ import { EditAppointmentDialogComponent } from '../edit-appointment-dialog/edit-
     MatListModule,
     MatButtonModule,
     MatSnackBarModule,
-    MatDialogModule
+    MatDialogModule,
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatDatepickerModule,
+    MatNativeDateModule
+  ],
+  providers: [
+    { provide: DateAdapter, useClass: NativeDateAdapter },
+    { provide: MAT_DATE_FORMATS, useValue: CUSTOM_DATE_FORMATS }
   ],
   templateUrl: './manage-upcoming-appointments.component.html',
   styleUrls: ['./manage-upcoming-appointments.component.css']
 })
 export class ManageUpcomingAppointmentsComponent implements OnInit, OnDestroy {
-  appointments: Appointment[] = [];
+  appointments: Array<{
+    appointment: Appointment;
+    doctor: Doctor;
+    user: User;
+    formattedTime: string;
+  }> = [];
   filteredAppointments: Array<{
     appointment: Appointment;
     doctor: Doctor;
     user: User;
     formattedTime: string;
   }> = [];
+  filterForm: FormGroup;
   private appointmentsSubscription?: Subscription;
 
   constructor(
@@ -47,11 +80,24 @@ export class ManageUpcomingAppointmentsComponent implements OnInit, OnDestroy {
     private userService: UserDataAccessService,
     private dialog: MatDialog,
     private snackBar: MatSnackBar,
-    private loadingService: LoadingService
-  ) { }
+    private loadingService: LoadingService,
+    private fb: FormBuilder
+  ) {
+    this.filterForm = this.fb.group({
+      doctorName: [''],
+      patientSearch: [''],
+      startDate: [null],
+      endDate: [null]
+    });
+  }
 
   ngOnInit(): void {
     this.loadAppointments();
+
+    // Subscribe to filter changes
+    this.filterForm.valueChanges.subscribe(() => {
+      this.applyFilters();
+    });
   }
 
   ngOnDestroy(): void {
@@ -60,6 +106,9 @@ export class ManageUpcomingAppointmentsComponent implements OnInit, OnDestroy {
 
   private async loadAppointments(): Promise<void> {
     this.loadingService.show();
+
+    this.filterForm.reset();
+
     this.appointmentsSubscription = this.appointmentService.getAllAppointments().subscribe({
       next: async (appointments: Appointment[]) => {
         const now = new Date();
@@ -67,7 +116,7 @@ export class ManageUpcomingAppointmentsComponent implements OnInit, OnDestroy {
         const currentTime24h = TimeMapping.get24HourTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })) || '00:00';
         const currentDate = now.toISOString().split('T')[0];
 
-        this.filteredAppointments = [];
+        this.appointments = [];
         for (const appointment of appointments) {
           if (
             appointment.date > currentDate ||
@@ -77,31 +126,34 @@ export class ManageUpcomingAppointmentsComponent implements OnInit, OnDestroy {
             const user = await this.userService.getUserByUid(appointment.userId);
             if (doctor && user) {
               const formattedTime = TimeMapping.get12HourTime(appointment.appointmentStartTime) || appointment.appointmentStartTime;
-              this.filteredAppointments.push({ appointment, doctor, user, formattedTime });
+              this.appointments.push({ appointment, doctor, user, formattedTime });
             }
           }
         }
 
-  // Sorting the filteredAppointments
-  this.filteredAppointments.sort((a, b) => {
-    // Compare Doctor's Name
-    const doctorNameA = a.doctor.name.toLowerCase();
-    const doctorNameB = b.doctor.name.toLowerCase();
-    if (doctorNameA < doctorNameB) return -1;
-    if (doctorNameA > doctorNameB) return 1;
+      // Sorting the appointments
+      this.appointments.sort((a, b) => {
+        // Compare Doctor's Name
+        const doctorNameA = a.doctor.name.toLowerCase();
+        const doctorNameB = b.doctor.name.toLowerCase();
+        if (doctorNameA < doctorNameB) return -1;
+        if (doctorNameA > doctorNameB) return 1;
 
-    // Compare Appointment Date
-    if (a.appointment.date < b.appointment.date) return -1;
-    if (a.appointment.date > b.appointment.date) return 1;
+        // Compare Appointment Date
+        if (a.appointment.date < b.appointment.date) return -1;
+        if (a.appointment.date > b.appointment.date) return 1;
 
-    // Compare Formatted Time
-    const timeA = a.appointment.appointmentStartTime;
-    const timeB = b.appointment.appointmentStartTime;
-    if (timeA < timeB) return -1;
-    if (timeA > timeB) return 1;
+        // Compare Formatted Time
+        const timeA = a.appointment.appointmentStartTime;
+        const timeB = b.appointment.appointmentStartTime;
+        if (timeA < timeB) return -1;
+        if (timeA > timeB) return 1;
 
-    return 0;
-  });
+        return 0;
+      });
+
+      // Initial filter application
+      this.applyFilters();
 
         this.loadingService.hide();
       },
@@ -113,15 +165,46 @@ export class ManageUpcomingAppointmentsComponent implements OnInit, OnDestroy {
     });
   }
 
+  private applyFilters(): void {
+    const { doctorName, patientSearch, startDate, endDate } = this.filterForm.value;
+
+    this.filteredAppointments = [...this.appointments];
+
+    this.filteredAppointments = this.filteredAppointments.filter(item => {
+      const matchesDoctor = doctorName ? item.doctor.name.toLowerCase().includes(doctorName.toLowerCase()) : true;
+      
+      const matchesPatient = patientSearch ? 
+        (item.user.firstName.toLowerCase().includes(patientSearch.toLowerCase()) ||
+         item.user.lastName.toLowerCase().includes(patientSearch.toLowerCase()) ||
+         item.user.email.toLowerCase().includes(patientSearch.toLowerCase())) 
+        : true;
+      
+        let matchesStartDate = true;
+        let matchesEndDate = true;
+  
+        if (startDate) {
+          const appointmentDate = this.normalizeDate(new Date(item.appointment.date));
+          const filterStartDate = this.normalizeDate(new Date(startDate));
+          matchesStartDate = appointmentDate >= filterStartDate;
+        }
+  
+        if (endDate) {
+          const appointmentDate = this.normalizeDate(new Date(item.appointment.date));
+          const filterEndDate = this.normalizeDate(new Date(endDate));
+          matchesEndDate = appointmentDate <= filterEndDate;
+        }
+
+      return matchesDoctor && matchesPatient && matchesStartDate && matchesEndDate;
+    });
+  }
+
   addAppointment(): void {
     const dialogRef = this.dialog.open(EditAppointmentDialogComponent, { data: { appointment: null } });
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         this.snackBar.open('Appointment added successfully', 'Dismiss', { duration: 3000 });
         // Optionally refresh the appointments list
-        this.loadingService.show();
         this.loadAppointments();
-        this.loadingService.hide();
       }
     });
   }
@@ -132,9 +215,7 @@ export class ManageUpcomingAppointmentsComponent implements OnInit, OnDestroy {
       if (result) {
         this.snackBar.open('Appointment updated successfully', 'Dismiss', { duration: 3000 });
         // Refresh the appointments list
-        this.loadingService.show();
         this.loadAppointments();
-        this.loadingService.hide();
       }
     });
   }
@@ -161,11 +242,20 @@ export class ManageUpcomingAppointmentsComponent implements OnInit, OnDestroy {
           this.snackBar.open('Failed to delete appointment', 'Dismiss', { duration: 5000 });
         } finally {
           // Refresh the appointments list
-          this.loadingService.show();
           this.loadAppointments();
-          this.loadingService.hide();
         }
       }
     });
+  }
+
+  /**
+   * Resets the time of a Date object to midnight.
+   * @param date The Date object to normalize.
+   * @returns A new Date object set to midnight.
+   */
+  private normalizeDate(date: Date): Date {
+    const normalized = new Date(date);
+    normalized.setHours(0, 0, 0, 0);
+    return normalized;
   }
 }

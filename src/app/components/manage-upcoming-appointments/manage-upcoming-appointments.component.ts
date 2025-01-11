@@ -59,7 +59,7 @@ export const CUSTOM_DATE_FORMATS = {
   styleUrls: ['./manage-upcoming-appointments.component.css']
 })
 export class ManageUpcomingAppointmentsComponent implements OnInit, OnDestroy {
-  appointments: Array<{
+  appointmentsList: Array<{
     appointment: Appointment;
     doctor: Doctor;
     user: User;
@@ -72,15 +72,15 @@ export class ManageUpcomingAppointmentsComponent implements OnInit, OnDestroy {
     formattedTime: string;
   }> = [];
   filterForm: FormGroup;
-  private appointmentsSubscription?: Subscription;
+  protected appointmentsSubscription?: Subscription;
 
   constructor(
-    private appointmentService: AppointmentDataAccessService,
-    private doctorService: DoctorDataAccessService,
-    private userService: UserDataAccessService,
-    private dialog: MatDialog,
-    private snackBar: MatSnackBar,
-    private loadingService: LoadingService,
+    protected appointmentService: AppointmentDataAccessService,
+    protected doctorService: DoctorDataAccessService,
+    protected userService: UserDataAccessService,
+    protected dialog: MatDialog,
+    protected snackBar: MatSnackBar,
+    protected loadingService: LoadingService,
     private fb: FormBuilder
   ) {
     this.filterForm = this.fb.group({
@@ -104,58 +104,57 @@ export class ManageUpcomingAppointmentsComponent implements OnInit, OnDestroy {
     this.appointmentsSubscription?.unsubscribe();
   }
 
-  private async loadAppointments(): Promise<void> {
+  protected async loadAppointments(): Promise<void> {
     this.loadingService.show();
-
     this.filterForm.reset();
 
     this.appointmentsSubscription = this.appointmentService.getAllAppointments().subscribe({
       next: async (appointments: Appointment[]) => {
-        const now = new Date();
-        now.setMinutes(now.getMinutes() + 30);
-        const currentTime24h = TimeMapping.get24HourTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })) || '00:00';
-        const currentDate = now.toISOString().split('T')[0];
+        try {
+          const now = new Date();
+          const currentTime24h = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+          const currentDate = now.toISOString().split('T')[0];
 
-        this.appointments = [];
-        for (const appointment of appointments) {
-          if (
-            appointment.date > currentDate ||
-            (appointment.date === currentDate && appointment.appointmentStartTime >= currentTime24h)
-          ) {
-            const doctor = await this.doctorService.getDoctorById(appointment.doctorId);
-            const user = await this.userService.getUserByUid(appointment.userId);
-            if (doctor && user) {
-              const formattedTime = TimeMapping.get12HourTime(appointment.appointmentStartTime) || appointment.appointmentStartTime;
-              this.appointments.push({ appointment, doctor, user, formattedTime });
+          this.appointmentsList = [];
+          for (const appointment of appointments) {
+            if (appointment.date > currentDate ||
+              (appointment.date === currentDate && appointment.appointmentStartTime >= currentTime24h)) {
+              const doctor = await this.doctorService.getDoctorById(appointment.doctorId);
+              const user = await this.userService.getUserByUid(appointment.userId);
+              if (doctor && user) {
+                const formattedTime = TimeMapping.get12HourTime(appointment.appointmentStartTime) || appointment.appointmentStartTime;
+                this.appointmentsList.push({ appointment, doctor, user, formattedTime });
+              }
             }
           }
+
+          // Sorting the appointments
+          this.appointmentsList.sort((a, b) => {
+            // Compare Doctor's Name
+            const doctorNameA = a.doctor.name.toLowerCase();
+            const doctorNameB = b.doctor.name.toLowerCase();
+            if (doctorNameA < doctorNameB) return -1;
+            if (doctorNameA > doctorNameB) return 1;
+
+            // Compare Appointment Date
+            if (a.appointment.date < b.appointment.date) return -1;
+            if (a.appointment.date > b.appointment.date) return 1;
+
+            // Compare Formatted Time
+            if (a.appointment.appointmentStartTime < b.appointment.appointmentStartTime) return -1;
+            if (a.appointment.appointmentStartTime > b.appointment.appointmentStartTime) return 1;
+
+            return 0;
+          });
+
+          // Initial filter application
+          this.applyFilters();
+        } catch (error) {
+          console.error('Error fetching appointments', error);
+          this.snackBar.open('Failed to load appointments', 'Dismiss', { duration: 5000 });
+        } finally {
+          this.loadingService.hide();
         }
-
-      // Sorting the appointments
-      this.appointments.sort((a, b) => {
-        // Compare Doctor's Name
-        const doctorNameA = a.doctor.name.toLowerCase();
-        const doctorNameB = b.doctor.name.toLowerCase();
-        if (doctorNameA < doctorNameB) return -1;
-        if (doctorNameA > doctorNameB) return 1;
-
-        // Compare Appointment Date
-        if (a.appointment.date < b.appointment.date) return -1;
-        if (a.appointment.date > b.appointment.date) return 1;
-
-        // Compare Formatted Time
-        const timeA = a.appointment.appointmentStartTime;
-        const timeB = b.appointment.appointmentStartTime;
-        if (timeA < timeB) return -1;
-        if (timeA > timeB) return 1;
-
-        return 0;
-      });
-
-      // Initial filter application
-      this.applyFilters();
-
-        this.loadingService.hide();
       },
       error: (error: any) => {
         console.error('Error fetching appointments', error);
@@ -165,34 +164,34 @@ export class ManageUpcomingAppointmentsComponent implements OnInit, OnDestroy {
     });
   }
 
-  private applyFilters(): void {
+  protected applyFilters(): void {
     const { doctorName, patientSearch, startDate, endDate } = this.filterForm.value;
 
-    this.filteredAppointments = [...this.appointments];
+    this.filteredAppointments = this.appointmentsList;
 
     this.filteredAppointments = this.filteredAppointments.filter(item => {
       const matchesDoctor = doctorName ? item.doctor.name.toLowerCase().includes(doctorName.toLowerCase()) : true;
-      
-      const matchesPatient = patientSearch ? 
+
+      const matchesPatient = patientSearch ?
         (item.user.firstName.toLowerCase().includes(patientSearch.toLowerCase()) ||
-         item.user.lastName.toLowerCase().includes(patientSearch.toLowerCase()) ||
-         item.user.email.toLowerCase().includes(patientSearch.toLowerCase())) 
+          item.user.lastName.toLowerCase().includes(patientSearch.toLowerCase()) ||
+          item.user.email.toLowerCase().includes(patientSearch.toLowerCase()))
         : true;
-      
-        let matchesStartDate = true;
-        let matchesEndDate = true;
-  
-        if (startDate) {
-          const appointmentDate = this.normalizeDate(new Date(item.appointment.date));
-          const filterStartDate = this.normalizeDate(new Date(startDate));
-          matchesStartDate = appointmentDate >= filterStartDate;
-        }
-  
-        if (endDate) {
-          const appointmentDate = this.normalizeDate(new Date(item.appointment.date));
-          const filterEndDate = this.normalizeDate(new Date(endDate));
-          matchesEndDate = appointmentDate <= filterEndDate;
-        }
+
+      let matchesStartDate = true;
+      let matchesEndDate = true;
+
+      if (startDate) {
+        const appointmentDate = this.normalizeDate(new Date(item.appointment.date));
+        const filterStartDate = this.normalizeDate(new Date(startDate));
+        matchesStartDate = appointmentDate >= filterStartDate;
+      }
+
+      if (endDate) {
+        const appointmentDate = this.normalizeDate(new Date(item.appointment.date));
+        const filterEndDate = this.normalizeDate(new Date(endDate));
+        matchesEndDate = appointmentDate <= filterEndDate;
+      }
 
       return matchesDoctor && matchesPatient && matchesStartDate && matchesEndDate;
     });
@@ -202,7 +201,7 @@ export class ManageUpcomingAppointmentsComponent implements OnInit, OnDestroy {
     const dialogRef = this.dialog.open(EditAppointmentDialogComponent, { data: { appointment: null } });
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        this.snackBar.open('Appointment added successfully', 'Dismiss', { duration: 3000 });
+        this.snackBar.open('Appointment added successfully', 'Dismiss', { duration: 5000 });
         // Optionally refresh the appointments list
         this.loadAppointments();
       }
@@ -213,7 +212,7 @@ export class ManageUpcomingAppointmentsComponent implements OnInit, OnDestroy {
     const dialogRef = this.dialog.open(EditAppointmentDialogComponent, { data: { appointment } });
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        this.snackBar.open('Appointment updated successfully', 'Dismiss', { duration: 3000 });
+        this.snackBar.open('Appointment updated successfully', 'Dismiss', { duration: 5000 });
         // Refresh the appointments list
         this.loadAppointments();
       }
@@ -236,7 +235,7 @@ export class ManageUpcomingAppointmentsComponent implements OnInit, OnDestroy {
       if (confirmed) {
         try {
           await this.appointmentService.removeAppointment(appointment.id);
-          this.snackBar.open('Appointment deleted successfully', 'Dismiss', { duration: 3000 });
+          this.snackBar.open('Appointment deleted successfully', 'Dismiss', { duration: 5000 });
         } catch (error) {
           console.error('Error deleting appointment', error);
           this.snackBar.open('Failed to delete appointment', 'Dismiss', { duration: 5000 });

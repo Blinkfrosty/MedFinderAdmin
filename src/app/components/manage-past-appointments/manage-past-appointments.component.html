@@ -1,1 +1,54 @@
-<p>manage-past-appointments works!</p>
+<div class="appointment-list">
+    <div class="header">
+        <h2>Manage Past Appointments</h2>
+    </div>
+
+    <!-- Filter Section -->
+    <form [formGroup]="filterForm" class="filter-form">
+        <div class="search-fields">
+            <mat-form-field class="search-bar">
+                <mat-label>Search Doctor</mat-label>
+                <input matInput placeholder="Doctor Name" formControlName="doctorName">
+            </mat-form-field>
+
+            <mat-form-field class="search-bar">
+                <mat-label>Search Patient</mat-label>
+                <input matInput placeholder="Patient Name or Email" formControlName="patientSearch">
+            </mat-form-field>
+        </div>
+
+        <div class="search-fields">
+            <mat-form-field class="search-bar">
+                <mat-label>Start Date</mat-label>
+                <input matInput [matDatepicker]="startPicker" formControlName="startDate">
+                <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+                <mat-datepicker #startPicker></mat-datepicker>
+            </mat-form-field>
+
+            <mat-form-field class="search-bar">
+                <mat-label>End Date</mat-label>
+                <input matInput [matDatepicker]="endPicker" formControlName="endDate">
+                <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+                <mat-datepicker #endPicker></mat-datepicker>
+            </mat-form-field>
+        </div>
+    </form>
+    <!-- End of Filter Section -->
+
+    <mat-list>
+        <mat-list-item *ngFor="let item of filteredAppointments">
+            <div class="list-item-content">
+                <div class="appointment-info">
+                    <div class="doctor-name">{{ item.doctor.name }}</div>
+                    <div>Patient - {{ item.user.firstName }} {{ item.user.lastName }} ({{ item.user.email }})</div>
+                    <div>Reason - {{ item.appointment.reasonForVisit }}</div>
+                    <div>{{ item.appointment.date | date:'dd/MM/yyyy' }} {{ item.formattedTime }}</div>
+                </div>
+                <div class="button-group">
+                    <button mat-raised-button color="primary" (click)="editAppointment(item.appointment)">Edit</button>
+                    <button mat-raised-button color="warn" (click)="deleteAppointment(item.appointment)">Delete</button>
+                </div>
+            </div>
+        </mat-list-item>
+    </mat-list>
+</div>

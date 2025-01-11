@@ -68,16 +68,16 @@ export class EditAppointmentDialogComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    private dialogRef: MatDialogRef<EditAppointmentDialogComponent>,
+    protected dialogRef: MatDialogRef<EditAppointmentDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: { appointment: Appointment | null },
-    private userService: UserDataAccessService,
-    private hospitalService: HospitalDataAccessService,
-    private doctorService: DoctorDataAccessService,
-    private appointmentService: AppointmentDataAccessService,
-    private loadingService: LoadingService,
-    private snackBar: MatSnackBar,
+    protected userService: UserDataAccessService,
+    protected hospitalService: HospitalDataAccessService,
+    protected doctorService: DoctorDataAccessService,
+    protected appointmentService: AppointmentDataAccessService,
+    protected loadingService: LoadingService,
+    protected snackBar: MatSnackBar,
     private authService: AuthService,
-    private cdr: ChangeDetectorRef
+    protected cdr: ChangeDetectorRef
   ) {
     this.isNew = !data.appointment;
 
@@ -101,7 +101,7 @@ export class EditAppointmentDialogComponent implements OnInit {
     }, 0);
   }
 
-  private async initializeForm(): Promise<void> {
+  protected async initializeForm(): Promise<void> {
     try {
       await this.checkIfSystemAdmin();
 
@@ -122,7 +122,7 @@ export class EditAppointmentDialogComponent implements OnInit {
           hospitalId: this.data.appointment.hospitalId,
           doctorId: this.data.appointment.doctorId,
           date: new Date(this.data.appointment.date),
-          appointmentStartTime: TimeMapping.get12HourTime(this.data.appointment.appointmentStartTime),
+          // Setting start time later
           reasonForVisit: this.data.appointment.reasonForVisit,
           appointmentNotes: this.data.appointment.appointmentNotes
         });
@@ -132,7 +132,19 @@ export class EditAppointmentDialogComponent implements OnInit {
 
         // Load available times based on selected date and doctor
         const selectedDate = new Date(this.data.appointment.date);
-        await this.loadAvailableTimes(selectedDate, this.data.appointment.doctorId);
+        await this.loadAvailableTimes(selectedDate, this.data.appointment.doctorId, this.data.appointment);
+
+        // After availableTimes are loaded, set the appointmentStartTime
+        const formattedStartTime = TimeMapping.get12HourTime(this.data.appointment.appointmentStartTime);
+        if (formattedStartTime && this.availableTimes.includes(formattedStartTime)) {
+          this.editAppointmentForm.patchValue({
+            appointmentStartTime: formattedStartTime
+          });
+          this.editAppointmentForm.get('appointmentStartTime')!.enable();
+        } else {
+          this.editAppointmentForm.get('appointmentStartTime')!.reset();
+          this.editAppointmentForm.get('appointmentStartTime')!.disable();
+        }
       }
 
       // Listen to changes in hospital selection to load doctors
@@ -149,7 +161,11 @@ export class EditAppointmentDialogComponent implements OnInit {
         const doctorId = this.editAppointmentForm.get('doctorId')!.value;
         this.editAppointmentForm.get('appointmentStartTime')!.reset();
         if (doctorId && date) {
-          await this.loadAvailableTimes(date, doctorId);
+          if (!this.isNew && this.data.appointment) {
+            await this.loadAvailableTimes(date, doctorId, this.data.appointment);
+          } else {
+            await this.loadAvailableTimes(date, doctorId);
+          }
         } else {
           this.availableTimes = [];
           this.editAppointmentForm.get('appointmentStartTime')!.disable();
@@ -161,7 +177,11 @@ export class EditAppointmentDialogComponent implements OnInit {
         const date = this.editAppointmentForm.get('date')!.value;
         this.editAppointmentForm.get('appointmentStartTime')!.reset();
         if (doctorId && date) {
-          await this.loadAvailableTimes(date, doctorId);
+          if (!this.isNew && this.data.appointment) {
+            await this.loadAvailableTimes(date, doctorId, this.data.appointment);
+          } else {
+            await this.loadAvailableTimes(date, doctorId);
+          }
         } else {
           this.availableTimes = [];
           this.editAppointmentForm.get('appointmentStartTime')!.disable();
@@ -179,7 +199,7 @@ export class EditAppointmentDialogComponent implements OnInit {
   /**
    * Checks if the current user is a system admin.
    */
-  private async checkIfSystemAdmin(): Promise<void> {
+  protected async checkIfSystemAdmin(): Promise<void> {
     try {
       const currentUser = await this.authService.getCurrentUser();
       if (currentUser) {
@@ -203,7 +223,7 @@ export class EditAppointmentDialogComponent implements OnInit {
     return null;
   }
 
-  private async loadDoctors(hospitalId: string): Promise<void> {
+  protected async loadDoctors(hospitalId: string): Promise<void> {
     if (hospitalId) {
       this.loadingService.show();
       try {
@@ -222,28 +242,33 @@ export class EditAppointmentDialogComponent implements OnInit {
     }
   }
 
-  private async loadAvailableTimes(date: Date, doctorId: string): Promise<void> {
+  protected async loadAvailableTimes(date: Date, doctorId: string, currentAppointment: Appointment | null = null): Promise<void> {
     this.loadingService.show();
     try {
-        const formattedDate = this.formatDate(date);
-        const appointments = await firstValueFrom(this.appointmentService.getAppointmentsByDoctorForDate(doctorId, formattedDate));
-        const bookedTimes24 = appointments.map(app => app.appointmentStartTime);
-        const bookedTimes12 = bookedTimes24.map(time => TimeMapping.get12HourTime(time)).filter(time => time !== undefined) as string[];
-        
-        const day = this.getDayOfWeek(date);
-        const officeHours = this.doctors.find(doc => doc.id === doctorId)?.officeHours[day];
-        if (officeHours && officeHours.available) {
-            const generatedTimes = this.generateTimeSlots(officeHours.startTime, officeHours.endTime);
-            this.availableTimes = generatedTimes.filter(time => !bookedTimes12.includes(time));
-            this.editAppointmentForm.get('appointmentStartTime')!.enable();
-        } else {
-            this.availableTimes = [];
-            this.editAppointmentForm.get('appointmentStartTime')!.disable();
-        }
+      const formattedDate = this.formatDate(date);
+      const appointments = await firstValueFrom(this.appointmentService.getAppointmentsByDoctorForDate(doctorId, formattedDate));
+      const bookedTimes24 = appointments.map(app => app.appointmentStartTime);
+      let bookedTimes12 = bookedTimes24.map(time => TimeMapping.get12HourTime(time)).filter(time => time !== undefined) as string[];
+
+      if (currentAppointment && formattedDate === currentAppointment.date) {
+        const currentAppointmentTime12 = TimeMapping.get12HourTime(currentAppointment.appointmentStartTime) || '';
+        bookedTimes12 = bookedTimes12.filter(time => time !== currentAppointmentTime12);
+      }
+
+      const day = this.getDayOfWeek(date);
+      const officeHours = this.doctors.find(doc => doc.id === doctorId)?.officeHours[day];
+      if (officeHours && officeHours.available) {
+        const generatedTimes = this.generateTimeSlots(officeHours.startTime, officeHours.endTime);
+        this.availableTimes = generatedTimes.filter(time => !bookedTimes12.includes(time));
+        this.editAppointmentForm.get('appointmentStartTime')!.enable();
+      } else {
+        this.availableTimes = [];
+        this.editAppointmentForm.get('appointmentStartTime')!.disable();
+      }
     } catch (error) {
-        this.snackBar.open('Failed to load available times', 'Close', { duration: 3000 });
+      this.snackBar.open('Failed to load available times', 'Close', { duration: 5000 });
     } finally {
-        this.loadingService.hide();
+      this.loadingService.hide();
     }
   }
 
@@ -260,7 +285,7 @@ export class EditAppointmentDialogComponent implements OnInit {
     startDate.setHours(startHour, startMinute, 0, 0);
     const endDate = new Date();
     endDate.setHours(endHour, endMinute, 0, 0);
-    
+
     while (startDate < endDate) {
       const time24h = `${this.pad(startDate.getHours())}:${this.pad(startDate.getMinutes())}`;
       const time12h = TimeMapping.get12HourTime(time24h) || time24h;
@@ -278,7 +303,7 @@ export class EditAppointmentDialogComponent implements OnInit {
     const formValues = this.editAppointmentForm.getRawValue();
 
     const appointment: Appointment = {
-      id: this.isNew ? '': formValues.id,
+      id: this.isNew ? '' : formValues.id,
       userId: formValues.userId,
       hospitalId: formValues.hospitalId,
       doctorId: formValues.doctorId,
@@ -302,7 +327,6 @@ export class EditAppointmentDialogComponent implements OnInit {
           appointment.hospitalId,
           appointment.appointmentNotes
         );
-        this.snackBar.open('Appointment added successfully', 'Dismiss', { duration: 3000 });
       } else {
         await this.appointmentService.setAppointment(
           appointment.id,
@@ -315,7 +339,6 @@ export class EditAppointmentDialogComponent implements OnInit {
           appointment.hospitalId,
           appointment.appointmentNotes
         );
-        this.snackBar.open('Appointment updated successfully', 'Dismiss', { duration: 3000 });
       }
       this.dialogRef.close(true);
     } catch (error) {
@@ -332,15 +355,15 @@ export class EditAppointmentDialogComponent implements OnInit {
   private pad(num: number): string {
     return num < 10 ? '0' + num : num.toString();
   }
-  
-  private formatDate(date: Date): string {
+
+  protected formatDate(date: Date): string {
     const year = date.getFullYear();
     const month = this.pad(date.getMonth() + 1);
     const day = this.pad(date.getDate());
     return `${year}-${month}-${day}`;
   }
 
-  private getDepartmentId(doctorId: string): string {
+  protected getDepartmentId(doctorId: string): string {
     const doctor = this.doctors.find(d => d.id === doctorId);
     return doctor ? doctor.departmentId : '';
   }

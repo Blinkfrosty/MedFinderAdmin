@@ -53,6 +53,7 @@ export class AssignHospitalDialogComponent implements OnInit {
     this.hospitalService.getAllHospitals().subscribe({
       next: (hospitals) => {
         this.hospitals = hospitals;
+        this.hospitals.sort((a, b) => a.name.localeCompare(b.name));
         // After fetching hospitals, fetch the assigned hospital ID
         this.assignmentService.getAssignedHospitalId(this.user.id).then(hospitalId => {
           if (hospitalId) {

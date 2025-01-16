@@ -17,6 +17,8 @@ import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
+import { AssignHospitalDialogComponent } from '../assign-hospital-dialog/assign-hospital-dialog.component';
+import { HospitalAdminAssignmentDataAccessService } from '../../services/hospital-admin-assignment-data-access.service';
 
 /**
  * Component responsible for managing users, including displaying the user list,
@@ -26,10 +28,10 @@ import { MatIconModule } from '@angular/material/icon';
   selector: 'app-manage-users',
   standalone: true,
   imports: [
-    CommonModule, 
-    MatListModule, 
-    MatButtonModule, 
-    MatTooltipModule, 
+    CommonModule,
+    MatListModule,
+    MatButtonModule,
+    MatTooltipModule,
     MatSnackBarModule,
     FormsModule,
     MatFormFieldModule,
@@ -58,8 +60,9 @@ export class ManageUsersComponent implements OnInit {
     private loadingService: LoadingService,
     private photoStorageService: PhotoStorageService,
     private snackBar: MatSnackBar,
+    private hospitalAdminAssignmentDataAccessService: HospitalAdminAssignmentDataAccessService,
     @Inject('DISABLE_FUNCTIONS') private disableFunctionsConfig: boolean
-  ) { 
+  ) {
     this.functionsDisabled = this.disableFunctionsConfig;
   }
 
@@ -116,12 +119,12 @@ export class ManageUsersComponent implements OnInit {
    */
   filterUsers(): void {
     const term = this.searchTerm.toLowerCase();
-    this.filteredUsers = this.users.filter(user => 
-        user.id.toLowerCase().includes(term) ||
-        `${user.firstName} ${user.lastName}`.toLowerCase().includes(term) ||
-        user.email.toLowerCase().includes(term)
+    this.filteredUsers = this.users.filter(user =>
+      user.id.toLowerCase().includes(term) ||
+      `${user.firstName} ${user.lastName}`.toLowerCase().includes(term) ||
+      user.email.toLowerCase().includes(term)
     );
-}
+  }
 
   /**
    * Opens the dialog to add a new user.
@@ -185,6 +188,12 @@ export class ManageUsersComponent implements OnInit {
             result.isHospitalAdmin,
             result.isSystemAdmin
           );
+
+          // If the user is no longer a hospital admin, delete the assignment
+          if (!result.isHospitalAdmin && user.isHospitalAdmin != result.isHospitalAdmin) {
+            await this.hospitalAdminAssignmentDataAccessService.deleteAssignment(user.id);
+          }
+
           this.snackBar.open('User updated successfully', 'Dismiss', { duration: 5000 });
         } catch (error) {
           console.error('Error updating user', error);
@@ -220,6 +229,10 @@ export class ManageUsersComponent implements OnInit {
           if (user.profilePictureUri) {
             await this.photoStorageService.deleteUserPhoto(user.id);
           }
+
+          // Delete the hospital assignment
+          await this.hospitalAdminAssignmentDataAccessService.deleteAssignment(user.id);
+
           await this.authService.deleteUser(user.id);
           this.snackBar.open('User deleted successfully', 'Dismiss', { duration: 5000 });
         } catch (error) {
@@ -228,6 +241,23 @@ export class ManageUsersComponent implements OnInit {
         } finally {
           this.loadingService.hide();
         }
+      }
+    });
+  }
+
+  /**
+     * Assigns a hospital to the specified hospital admin user.
+     * 
+     * @param user The user to assign a hospital to.
+     */
+  assignHospital(user: User): void {
+    const dialogRef = this.dialog.open(AssignHospitalDialogComponent, {
+      data: { user }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.snackBar.open('Hospital assignment updated.', 'Close', { duration: 5000 });
       }
     });
   }

@@ -14,7 +14,7 @@
                 <mat-label>Hospital</mat-label>
                 <mat-select formControlName="hospitalId" required>
                     <mat-option *ngFor="let hospital of hospitals" [value]="hospital.id">
-                        {{ hospital.name }}
+                        {{ hospital.name }}, {{ hospital.neighborhood }}, {{ hospital.city }}
                     </mat-option>
                 </mat-select>
                 <mat-error *ngIf="editAppointmentForm.get('hospitalId')?.hasError('required')">
